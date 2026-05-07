@@ -432,82 +432,120 @@ tr:hover td{background:var(--bg-secondary)}
 </div><!-- end app -->
 <div class="toast" id="toast"></div>
 
+
+<!-- EDIT EVENT MODAL -->
+<div class="modal-bg" id="modal-edit-event">
+  <div class="modal">
+    <h3>Edit event</h3>
+    <div class="fg"><label class="fl">Event name</label><input type="text" id="ee-name"/></div>
+    <div class="row2">
+      <div class="fg"><label class="fl">Department</label><select id="ee-dept"><option>Arts</option><option>Parks</option><option>Recreation</option></select></div>
+      <div class="fg"><label class="fl">Status</label><select id="ee-status"><option>Scheduled</option><option>Draft</option><option>Cancelled</option></select></div>
+      <div class="fg"><label class="fl">Date</label><input type="date" id="ee-date"/></div>
+      <div class="fg"><label class="fl">Time</label><input type="time" id="ee-time"/></div>
+    </div>
+    <div class="fg"><label class="fl">Location</label><input type="text" id="ee-loc"/></div>
+    <div class="fg"><label class="fl">Lead staff</label><select id="ee-staff-sel"></select></div>
+    <div class="fg"><label class="fl">Description</label><textarea id="ee-desc"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="deleteEventFromModal()">Delete event</button>
+      <button class="btn" onclick="closeModal('edit-event')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditEvent()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MILESTONE MODAL -->
+<div class="modal-bg" id="modal-edit-milestone">
+  <div class="modal">
+    <h3>Edit prep milestones</h3>
+    <p style="font-size:11px;color:var(--text-secondary);margin-bottom:14px">Adjust how many days before the event each milestone should be scheduled.</p>
+    <div id="milestone-edit-list"></div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-primary)">
+      <div style="font-size:12px;font-weight:600;margin-bottom:8px">Add new milestone</div>
+      <div class="row2">
+        <div class="fg"><label class="fl">Label</label><input type="text" id="nm-label" placeholder="e.g. Print flyers"/></div>
+        <div class="fg"><label class="fl">Days before event</label><input type="number" id="nm-days" placeholder="e.g. 10" min="1" max="365"/></div>
+      </div>
+      <div class="fg"><label class="fl">Color</label>
+        <select id="nm-color">
+          <option value="#185FA5">Blue — Social / comms</option>
+          <option value="#D85A30">Orange — Outreach</option>
+          <option value="#0F6E56">Green — Admin / logistics</option>
+          <option value="#534AB7">Purple — Staff</option>
+          <option value="#BA7517">Amber — Materials</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="addNewMilestone()">+ Add milestone</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('edit-milestone')">Close</button>
+      <button class="btn btn-primary" onclick="runAutomateFromModal()">⚡ Push to calendar</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- end app -->
+<div class="toast" id="toast"></div>
+
+<!-- Load data layer first, then UI logic -->
+<script src="data.js"></script>
 <script>
-// ── DATA ──────────────────────────────────────────────────────────
-let evts = [
-  {id:0,name:'Watercolor workshop',dept:'Arts',date:'2026-05-05',time:'10:00 AM',loc:'Community Arts Center',staff:'Laura Mitchell',status:'Scheduled',desc:'A beginner-friendly watercolor session for adults and teens. All supplies provided.',checklist:[{t:'Book Community Arts Center',done:true},{t:'Order watercolor supply kits',done:true},{t:'Send staff confirmation to Laura',done:false},{t:'Post on social media',done:false},{t:'Send reminder emails',done:false}],docs:[{name:'Venue booking confirmation',type:'PDF',date:'Apr 10'},{name:'Supply order receipt',type:'PDF',date:'Apr 15'}],autoEvents:[],isAuto:false},
-  {id:1,name:'Strouds Run trail walk',dept:'Parks',date:'2026-05-07',time:'9:00 AM',loc:'Strouds Run SP',staff:'Kevin James',status:'Scheduled',desc:'A guided 2-mile trail walk through Strouds Run State Park. Appropriate for all fitness levels.',checklist:[{t:'Confirm park access with ranger station',done:true},{t:'Print trail maps',done:false},{t:'Check weather forecast',done:false},{t:'Volunteer outreach',done:false},{t:'Social media post',done:false}],docs:[],autoEvents:[],isAuto:false},
-  {id:2,name:'Youth soccer clinic',dept:'Rec',date:'2026-05-10',time:'2:00 PM',loc:'Memorial Stadium',staff:'Dana Carter',status:'Scheduled',desc:'A 2-hour youth soccer skills clinic for ages 8–16. Cones, balls, and pinnies provided.',checklist:[{t:'Reserve Memorial Stadium field',done:true},{t:'Recruit volunteer coaches',done:false},{t:'Send parent waivers',done:false},{t:'Post flyer on website',done:false},{t:'Buy snacks and water',done:false}],docs:[{name:'Participant waiver template',type:'DOC',date:'Apr 5'}],autoEvents:[],isAuto:false},
-  {id:3,name:'Pottery — beginner series',dept:'Arts',date:'2026-05-12',time:'6:00 PM',loc:'APR Studio',staff:'Tom Pierce',status:'Scheduled',desc:'A 4-week beginner pottery series. Students will learn hand-building and basic wheel techniques.',checklist:[{t:'Book APR Studio kiln',done:true},{t:'Order clay and glazes',done:true},{t:'Confirm Tom Pierce availability',done:true},{t:'Set up registration form',done:false},{t:'Send confirmation emails to registrants',done:false}],docs:[],autoEvents:[],isAuto:false},
-  {id:4,name:'Adult swim fitness',dept:'Rec',date:'2026-05-14',time:'7:00 AM',loc:'Aquatic Center',staff:'Sara Nguyen',status:'Scheduled',desc:'Early morning water fitness class for adults 18+. Participants should bring their own towels.',checklist:[{t:'Reserve Aquatic Center lane',done:true},{t:'Print attendance sheets',done:false},{t:'Confirm Sara Nguyen schedule',done:true},{t:'Post in monthly newsletter',done:false}],docs:[],autoEvents:[],isAuto:false},
-  {id:5,name:'Nature photography walk',dept:'Parks',date:'2026-05-17',time:'9:00 AM',loc:'Strouds Run SP',staff:'Kevin James',status:'Draft',desc:'A guided photography walk focusing on macro and landscape shots in the park.',checklist:[{t:'Draft event description',done:true},{t:'Confirm lead photographer',done:false},{t:'Set registration cap',done:false}],docs:[],autoEvents:[],isAuto:false},
-  {id:6,name:'Mural painting workshop',dept:'Arts',date:'2026-05-20',time:'11:00 AM',loc:'APR Studio',staff:'Laura Mitchell',status:'Draft',desc:'Community mural painting session. Participants will contribute to a collaborative public artwork.',checklist:[{t:'Identify wall/surface location',done:false},{t:'Get city approval',done:false},{t:'Order exterior paint',done:false}],docs:[],autoEvents:[],isAuto:false},
-  {id:7,name:'Kayak intro clinic',dept:'Parks',date:'2026-05-24',time:'10:00 AM',loc:'Dow Lake',staff:'Kevin James',status:'Draft',desc:'Introduction to kayaking on Dow Lake. Life vests and kayaks provided. No experience needed.',checklist:[{t:'Reserve kayaks from equipment store',done:false},{t:'Confirm lifeguard on site',done:false},{t:'Weather contingency plan',done:false}],docs:[],autoEvents:[],isAuto:false},
-];
-
-let staffList = [
-  {id:0,first:'Laura',last:'Mitchell',ini:'LM',dept:'Arts',role:'Visual arts instructor',specs:'Painting, drawing, mixed media',evts:4,email:'l.mitchell@athens.gov',phone:'(740) 555-0101'},
-  {id:1,first:'Kevin',last:'James',ini:'KJ',dept:'Parks',role:'Park ranger / guide',specs:'Trail ecology, kayaking',evts:3,email:'k.james@athens.gov',phone:'(740) 555-0102'},
-  {id:2,first:'Dana',last:'Carter',ini:'DC',dept:'Rec',role:'Recreation coordinator',specs:'Team sports, fitness',evts:3,email:'d.carter@athens.gov',phone:'(740) 555-0103'},
-  {id:3,first:'Tom',last:'Pierce',ini:'TP',dept:'Arts',role:'Ceramics instructor',specs:'Pottery, sculpture',evts:2,email:'t.pierce@athens.gov',phone:'(740) 555-0104'},
-  {id:4,first:'Sara',last:'Nguyen',ini:'SN',dept:'Rec',role:'Aquatics coach',specs:'Swim lessons, water fitness',evts:5,email:'s.nguyen@athens.gov',phone:'(740) 555-0105'},
-  {id:5,first:'Priya',last:'Patel',ini:'PP',dept:'Arts',role:'Dance instructor',specs:'Ballet, contemporary dance',evts:1,email:'p.patel@athens.gov',phone:'(740) 555-0106'},
-  {id:6,first:'Marcus',last:'Webb',ini:'MW',dept:'Parks',role:'Outdoor educator',specs:'Birdwatching, wilderness',evts:2,email:'m.webb@athens.gov',phone:'(740) 555-0107'},
-];
-
 // ── STATE ─────────────────────────────────────────────────────────
 let currentPage = 'dashboard', prevPage = 'dashboard';
-let editStaffId = null, currentDocEvtId = null, currentDetailId = null;
+let editStaffId = null, currentDocEvtId = null, currentDetailId = null, editMilestoneEvtId = null, editEventId = null;
 let calView = 'month', calYear = 2026, calMonth = 4, calDay = 5;
 
-// ── HELPERS ───────────────────────────────────────────────────────
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const PAGE_TITLES = {dashboard:'Dashboard',events:'All events','event-detail':'Event detail',calendar:'Calendar',staff:'Instructors & staff',schedule:'Staff schedule'};
 
-function avCls(d){return d==='Arts'?'ava':d==='Parks'?'avp':'avr';}
-function dBadge(d){return d==='Arts'?'<span class="badge ba">Arts</span>':d==='Parks'?'<span class="badge bp">Parks</span>':'<span class="badge br">Rec</span>';}
-function sBadge(s){return s==='Scheduled'?'<span class="badge bs">Scheduled</span>':s==='Draft'?'<span class="badge bd">Draft</span>':'<span class="badge bc">Cancelled</span>';}
-function dColor(d){return d==='Arts'?'#534AB7':d==='Parks'?'#0F6E56':'#D85A30';}
-function chipColor(e){return e.isAuto?'#378ADD':dColor(e.dept);}
+// ── HELPERS ───────────────────────────────────────────────────────
+function avCls(d){ return d==='Arts'?'ava':d==='Parks'?'avp':'avr'; }
+function dBadge(d){ return d==='Arts'?'<span class="badge ba">Arts</span>':d==='Parks'?'<span class="badge bp">Parks</span>':'<span class="badge br">Rec</span>'; }
+function sBadge(s){ return s==='Scheduled'?'<span class="badge bs">Scheduled</span>':s==='Draft'?'<span class="badge bd">Draft</span>':'<span class="badge bc">Cancelled</span>'; }
+function dColor(d){ return d==='Arts'?'#534AB7':d==='Parks'?'#0F6E56':'#D85A30'; }
+function chipColor(e){ return e.isAuto?'#378ADD':dColor(e.dept); }
+function fmt12(val){ if(!val||val==='TBD') return val||'TBD'; const [h,m]=val.split(':'); const hh=parseInt(h); return `${hh%12||12}:${m} ${hh<12?'AM':'PM'}`; }
 
 function toast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2500);
+  setTimeout(()=>t.classList.remove('show'),2800);
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────────
 function goPage(p, el){
-  if(p !== 'event-detail') prevPage = currentPage;
-  currentPage = p;
+  if(p!=='event-detail') prevPage=currentPage;
+  currentPage=p;
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
   if(el) el.classList.add('active');
   else { const ni=document.querySelector(`.nav-item[data-p="${p}"]`); if(ni) ni.classList.add('active'); }
-  document.getElementById('page-title').textContent = PAGE_TITLES[p] || p;
+  document.getElementById('page-title').textContent = PAGE_TITLES[p]||p;
   document.getElementById('back-btn').classList.toggle('show', p==='event-detail');
-  document.getElementById('scroll-area').scrollTop = 0;
+  document.getElementById('scroll-area').scrollTop=0;
   if(p==='calendar') renderCal();
-  if(p==='staff') renderStaff('All');
-  if(p==='events') renderEvts('All');
-  if(p==='dashboard') renderDashboard();
+  if(p==='staff')    renderStaff('All');
+  if(p==='events')   renderEvts('All');
+  if(p==='dashboard')renderDashboard();
 }
 function goBack(){ goPage(prevPage); }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────
 function renderDashboard(){
-  document.getElementById('staff-count').textContent = staffList.length;
-  document.getElementById('draft-count').textContent = evts.filter(e=>e.status==='Draft'&&!e.isAuto).length;
-  const upcoming = evts.filter(e=>!e.isAuto&&e.status==='Scheduled').slice(0,5);
-  document.getElementById('dash-events').innerHTML = upcoming.map(e=>`
+  const evts  = APR.getRealEvents();
+  const staff = APR.getStaff();
+  document.getElementById('staff-count').textContent = staff.length;
+  document.getElementById('draft-count').textContent = evts.filter(e=>e.status==='Draft').length;
+  document.getElementById('dash-events').innerHTML = evts.filter(e=>e.status==='Scheduled').slice(0,5).map(e=>`
     <div class="event-row" onclick="openEventDetail(${e.id})">
       <div class="dot d${e.dept==='Arts'?'a':e.dept==='Parks'?'p':'r'}"></div>
       <div style="flex:1"><div class="evt-name">${e.name}</div><div class="evt-meta">${e.date} · ${e.time} · ${e.loc}</div></div>
       ${dBadge(e.dept)}
     </div>`).join('');
-  document.getElementById('dash-staff').innerHTML = staffList.slice(0,5).map(s=>`
+  document.getElementById('dash-staff').innerHTML = staff.slice(0,5).map(s=>`
     <div class="staff-row">
       <div class="av ${avCls(s.dept)}">${s.ini}</div>
       <div style="flex:1"><div style="font-size:12px;font-weight:600">${s.first} ${s.last}</div><div style="font-size:10px;color:var(--text-secondary)">${s.role}</div></div>
@@ -517,7 +555,7 @@ function renderDashboard(){
 
 // ── EVENTS LIST ───────────────────────────────────────────────────
 function renderEvts(f){
-  const rows = evts.filter(e=>!e.isAuto&&(f==='All'||(f==='Draft'?e.status==='Draft':e.dept===f)));
+  const rows = APR.getRealEvents().filter(e=>f==='All'||(f==='Draft'?e.status==='Draft':e.dept===f));
   document.getElementById('evt-tbody').innerHTML = rows.map(e=>`
     <tr>
       <td style="font-weight:600;color:var(--accent);cursor:pointer" onclick="openEventDetail(${e.id})">${e.name}</td>
@@ -533,12 +571,12 @@ function fEvt(f,el){ document.querySelectorAll('#page-events .fb').forEach(b=>b.
 
 // ── EVENT DETAIL ──────────────────────────────────────────────────
 function openEventDetail(id){
-  currentDetailId = id;
-  const e = evts.find(x=>x.id===id);
+  currentDetailId=id;
+  const e=APR.getEvent(id);
   if(!e) return;
   const total=e.checklist.length, done=e.checklist.filter(c=>c.done).length;
-  const pct = total ? Math.round(done/total*100) : 0;
-  const ganttTasks = [
+  const pct=total?Math.round(done/total*100):0;
+  const ganttTasks=[
     {label:'Venue booking',start:0,len:1,color:'#534AB7'},
     {label:'Staff confirmation',start:1,len:1,color:'#0F6E56'},
     {label:'Marketing & flyers',start:2,len:2,color:'#D85A30'},
@@ -548,18 +586,10 @@ function openEventDetail(id){
     {label:'Reminder emails',start:6,len:1,color:'#0F6E56'},
     {label:'Day-of setup',start:7,len:1,color:'#534AB7'},
   ];
-  const weeks = 8;
-  const autoMilestones = [
-    {label:'Social media announcement',daysOut:28,color:'#185FA5'},
-    {label:'Volunteer outreach email',daysOut:21,color:'#D85A30'},
-    {label:'Registration opens',daysOut:14,color:'#0F6E56'},
-    {label:'Social media reminder',daysOut:7,color:'#185FA5'},
-    {label:'Staff briefing',daysOut:3,color:'#534AB7'},
-    {label:'Reminder email to registrants',daysOut:1,color:'#0F6E56'},
-  ];
-  const docColors = {PDF:'#bc4a4a',DOC:'#185FA5',XLS:'#27500A',IMG:'#854F0B',Other:'#5F5E5A'};
+  const weeks=8;
+  const docColors={PDF:'#bc4a4a',DOC:'#185FA5',XLS:'#27500A',IMG:'#854F0B',Other:'#5F5E5A'};
 
-  document.getElementById('detail-content').innerHTML = `
+  document.getElementById('detail-content').innerHTML=`
   <div class="detail-header">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px">
       <div>
@@ -570,7 +600,10 @@ function openEventDetail(id){
         </div>
         <div style="font-size:12px;color:var(--text-secondary);margin-top:6px">${e.desc}</div>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="triggerAutomate(${e.id})">⚡ Auto-schedule milestones</button>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-sm" onclick="openEditEventModal(${e.id})">✏️ Edit event</button>
+        <button class="btn btn-primary btn-sm" onclick="triggerAutomate(${e.id})">⚡ Auto-schedule</button>
+      </div>
     </div>
     <div style="margin-top:12px">
       <div style="font-size:10px;color:var(--text-secondary);margin-bottom:5px">Checklist progress — ${done}/${total} tasks complete (${pct}%)</div>
@@ -586,7 +619,7 @@ function openEventDetail(id){
         <div class="checklist-item">
           <input type="checkbox" id="chk-${e.id}-${i}" ${c.done?'checked':''} onchange="toggleCheck(${e.id},${i})"/>
           <label for="chk-${e.id}-${i}" class="${c.done?'done':''}">${c.t}</label>
-          <span onclick="removeCheck(${e.id},${i})" style="font-size:10px;color:var(--text-tertiary);cursor:pointer;padding:2px 5px" title="Remove">✕</span>
+          <span onclick="removeCheck(${e.id},${i})" style="font-size:10px;color:var(--text-tertiary);cursor:pointer;padding:2px 6px" title="Remove">✕</span>
         </div>`).join('')}
       </div>
       <div class="add-item-row">
@@ -596,21 +629,22 @@ function openEventDetail(id){
     </div>
 
     <div class="card">
-      <div class="card-title">Prep milestones — auto-schedule
-        <button class="btn btn-sm" onclick="triggerAutomate(${e.id})">Run ⚡</button>
+      <div class="card-title">Prep milestones
+        <div style="display:flex;gap:5px">
+          <button class="btn btn-sm" onclick="openEditMilestoneModal(${e.id})">✏️ Edit</button>
+          <button class="btn btn-sm" onclick="triggerAutomate(${e.id})">⚡ Push</button>
+        </div>
       </div>
-      <div id="auto-list-${e.id}">
-        ${e.autoEvents.length ? e.autoEvents.map(m=>`
+      <div id="milestone-view-${e.id}">
+        ${(e.milestones||[]).map((m,i)=>`
         <div class="auto-item">
+          <input type="checkbox" ${m.done?'checked':''} onchange="APR.toggleMilestoneDone(${e.id},${i});openEventDetail(${e.id})" style="width:13px;height:13px;flex-shrink:0;margin-top:3px;accent-color:var(--accent)"/>
           <div class="auto-dot" style="background:${m.color}"></div>
-          <div><div class="auto-label">${m.label}</div><div class="auto-date">${m.daysOut} days before event · auto-scheduled</div></div>
-        </div>`).join('') : autoMilestones.map(m=>`
-        <div class="auto-item">
-          <div class="auto-dot" style="background:${m.color}"></div>
-          <div><div class="auto-label">${m.label}</div><div class="auto-date">${m.daysOut} days before event</div></div>
+          <div><div class="auto-label" style="${m.done?'text-decoration:line-through;color:var(--text-tertiary)':''}">${m.label}</div>
+          <div class="auto-date">${m.daysOut} days before event</div></div>
         </div>`).join('')}
       </div>
-      ${e.autoEvents.length ? '<div style="margin-top:8px;font-size:10px;color:var(--sched-color);font-weight:600">✓ Milestones pushed to calendar</div>' : '<div style="margin-top:8px;font-size:10px;color:var(--text-tertiary)">Click "Run ⚡" to push these dates to the calendar.</div>'}
+      ${e.autoScheduled?'<div style="margin-top:8px;font-size:10px;color:var(--sched-color);font-weight:600">✓ Milestones pushed to calendar</div>':'<div style="margin-top:8px;font-size:10px;color:var(--text-tertiary)">Click ⚡ Push to add milestone dates to the calendar.</div>'}
     </div>
   </div>
 
@@ -632,11 +666,9 @@ function openEventDetail(id){
   </div>
 
   <div class="card">
-    <div class="card-title">Documents
-      <button class="btn btn-sm" onclick="openDocModal(${e.id})">+ Upload</button>
-    </div>
+    <div class="card-title">Documents <button class="btn btn-sm" onclick="openDocModal(${e.id})">+ Upload</button></div>
     <div id="doc-list-${e.id}">
-      ${e.docs.length===0 ? '<div style="font-size:12px;color:var(--text-tertiary);padding:10px 0">No documents yet. Upload contracts, budgets, flyers, and more.</div>' :
+      ${e.docs.length===0?'<div style="font-size:12px;color:var(--text-tertiary);padding:10px 0">No documents yet.</div>':
         e.docs.map((d,i)=>`
         <div class="doc-item">
           <div class="doc-icon" style="background:${(docColors[d.type]||'#888')}22;color:${docColors[d.type]||'#888'}">${d.type}</div>
@@ -646,72 +678,146 @@ function openEventDetail(id){
     </div>
   </div>`;
 
-  prevPage = currentPage;
-  currentPage = 'event-detail';
+  prevPage=currentPage;
+  currentPage='event-detail';
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.getElementById('page-event-detail').classList.add('active');
-  document.getElementById('page-title').textContent = e.name;
+  document.getElementById('page-title').textContent=e.name;
   document.getElementById('back-btn').classList.add('show');
-  document.getElementById('scroll-area').scrollTop = 0;
+  document.getElementById('scroll-area').scrollTop=0;
 }
 
+// ── EDIT EVENT MODAL ──────────────────────────────────────────────
+function openEditEventModal(id){
+  editEventId=id;
+  const e=APR.getEvent(id);
+  document.getElementById('ee-name').value=e.name;
+  document.getElementById('ee-dept').value=e.dept==='Rec'?'Recreation':e.dept;
+  document.getElementById('ee-status').value=e.status;
+  document.getElementById('ee-date').value=e.date==='TBD'?'':e.date;
+  // Convert 12hr time to 24hr for input
+  let timeVal='';
+  if(e.time&&e.time!=='TBD'){
+    const m=e.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if(m){ let h=parseInt(m[1]); if(m[3].toUpperCase()==='PM'&&h!==12)h+=12; if(m[3].toUpperCase()==='AM'&&h===12)h=0; timeVal=`${String(h).padStart(2,'0')}:${m[2]}`; }
+    else timeVal=e.time;
+  }
+  document.getElementById('ee-time').value=timeVal;
+  document.getElementById('ee-loc').value=e.loc==='TBD'?'':e.loc;
+  document.getElementById('ee-desc').value=e.desc||'';
+  // Populate staff dropdown
+  const sel=document.getElementById('ee-staff-sel');
+  sel.innerHTML=APR.getStaff().map(s=>`<option${s.first+' '+s.last===e.staff?' selected':''}>${s.first} ${s.last}</option>`).join('');
+  openModal('edit-event');
+}
+function saveEditEvent(){
+  const dept=document.getElementById('ee-dept').value;
+  const timeRaw=document.getElementById('ee-time').value;
+  const timeFmt=timeRaw?fmt12(timeRaw):'TBD';
+  APR.updateEvent(editEventId,{
+    name:   document.getElementById('ee-name').value.trim()||APR.getEvent(editEventId).name,
+    dept,
+    status: document.getElementById('ee-status').value,
+    date:   document.getElementById('ee-date').value||'TBD',
+    time:   timeFmt,
+    loc:    document.getElementById('ee-loc').value||'TBD',
+    staff:  document.getElementById('ee-staff-sel').value,
+    desc:   document.getElementById('ee-desc').value,
+  });
+  closeModal('edit-event');
+  toast('Event updated and saved.');
+  openEventDetail(editEventId);
+}
+function deleteEventFromModal(){
+  const e=APR.getEvent(editEventId);
+  if(!confirm(`Delete "${e.name}"? This cannot be undone.`)) return;
+  APR.deleteEvent(editEventId);
+  closeModal('edit-event');
+  toast('Event deleted.');
+  goPage('events');
+  renderEvts('All');
+}
+
+// ── EDIT MILESTONE MODAL ──────────────────────────────────────────
+function openEditMilestoneModal(id){
+  editMilestoneEvtId=id;
+  renderMilestoneEditList();
+  openModal('edit-milestone');
+}
+function renderMilestoneEditList(){
+  const e=APR.getEvent(editMilestoneEvtId);
+  const colorNames={'#185FA5':'Blue','#D85A30':'Orange','#0F6E56':'Green','#534AB7':'Purple','#BA7517':'Amber'};
+  document.getElementById('milestone-edit-list').innerHTML=(e.milestones||[]).map((m,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border-primary)">
+      <div style="width:10px;height:10px;border-radius:50%;background:${m.color};flex-shrink:0"></div>
+      <input type="text" value="${m.label}" onchange="APR.updateMilestone(${editMilestoneEvtId},${i},{label:this.value})" style="flex:1;font-size:12px;padding:4px 8px;border:1px solid var(--border-secondary);border-radius:5px;font-family:inherit;background:var(--bg-primary);color:var(--text-primary)"/>
+      <input type="number" value="${m.daysOut}" min="1" max="365" onchange="APR.updateMilestone(${editMilestoneEvtId},${i},{daysOut:parseInt(this.value)||1})" style="width:62px;font-size:12px;padding:4px 8px;border:1px solid var(--border-secondary);border-radius:5px;font-family:inherit;text-align:center;background:var(--bg-primary);color:var(--text-primary)"/>
+      <span style="font-size:10px;color:var(--text-tertiary);white-space:nowrap">days before</span>
+      <select onchange="APR.updateMilestone(${editMilestoneEvtId},${i},{color:this.value})" style="font-size:11px;padding:3px 6px;border:1px solid var(--border-secondary);border-radius:5px;font-family:inherit;background:var(--bg-primary);color:var(--text-primary)">
+        ${['#185FA5','#D85A30','#0F6E56','#534AB7','#BA7517'].map(c=>`<option value="${c}"${m.color===c?' selected':''}>${colorNames[c]||c}</option>`).join('')}
+      </select>
+      <button onclick="APR.removeMilestone(${editMilestoneEvtId},${i});renderMilestoneEditList()" style="font-size:11px;background:none;border:none;cursor:pointer;color:var(--text-tertiary);padding:2px 6px" title="Remove">✕</button>
+    </div>`).join('');
+}
+function addNewMilestone(){
+  const label=document.getElementById('nm-label').value.trim();
+  const days=parseInt(document.getElementById('nm-days').value)||7;
+  const color=document.getElementById('nm-color').value;
+  if(!label){ toast('Please enter a milestone label.'); return; }
+  APR.addMilestone(editMilestoneEvtId,{label,daysOut:days,color});
+  document.getElementById('nm-label').value='';
+  document.getElementById('nm-days').value='';
+  renderMilestoneEditList();
+  toast('Milestone added.');
+}
+function runAutomateFromModal(){
+  const n=APR.scheduleAutoEvents(editMilestoneEvtId);
+  closeModal('edit-milestone');
+  toast(`${n} milestone dates pushed to calendar.`);
+  openEventDetail(editMilestoneEvtId);
+}
+
+// ── CHECKLIST ─────────────────────────────────────────────────────
 function toggleCheck(eid,idx){
-  const done = document.getElementById(`chk-${eid}-${idx}`).checked;
-  evts.find(e=>e.id===eid).checklist[idx].done = done;
-  const lbl = document.querySelector(`label[for="chk-${eid}-${idx}"]`);
-  if(lbl) lbl.className = done ? 'done' : '';
+  APR.toggleCheckItem(eid,idx);
+  const done=APR.getEvent(eid).checklist[idx].done;
+  const lbl=document.querySelector(`label[for="chk-${eid}-${idx}"]`);
+  if(lbl) lbl.className=done?'done':'';
 }
 function addCheck(eid){
-  const inp = document.getElementById(`new-chk-${eid}`);
+  const inp=document.getElementById(`new-chk-${eid}`);
   if(!inp.value.trim()) return;
-  evts.find(e=>e.id===eid).checklist.push({t:inp.value.trim(),done:false});
-  inp.value = '';
+  APR.addCheckItem(eid,inp.value);
+  inp.value='';
   openEventDetail(eid);
 }
-function removeCheck(eid,idx){ evts.find(e=>e.id===eid).checklist.splice(idx,1); openEventDetail(eid); }
+function removeCheck(eid,idx){ APR.removeCheckItem(eid,idx); openEventDetail(eid); }
 
+// ── DOCUMENTS ─────────────────────────────────────────────────────
 function openDocModal(eid){ currentDocEvtId=eid; document.getElementById('doc-date').value=new Date().toISOString().slice(0,10); openModal('doc'); }
 function saveDoc(){
-  const name = document.getElementById('doc-name').value.trim() || 'Untitled document';
-  const type = document.getElementById('doc-type').value;
-  const dateVal = document.getElementById('doc-date').value;
-  const notes = document.getElementById('doc-notes').value;
-  const dateLabel = dateVal ? new Date(dateVal).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : 'Today';
-  evts.find(e=>e.id===currentDocEvtId).docs.push({name,type,date:dateLabel,notes});
-  closeModal('doc');
-  openEventDetail(currentDocEvtId);
-  toast('Document added.');
+  const name=document.getElementById('doc-name').value.trim()||'Untitled document';
+  const type=document.getElementById('doc-type').value;
+  const dateVal=document.getElementById('doc-date').value;
+  const notes=document.getElementById('doc-notes').value;
+  const dateLabel=dateVal?new Date(dateVal).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'Today';
+  APR.addDoc(currentDocEvtId,{name,type,date:dateLabel,notes});
+  closeModal('doc'); openEventDetail(currentDocEvtId); toast('Document added.');
 }
-function removeDoc(eid,idx){ evts.find(e=>e.id===eid).docs.splice(idx,1); openEventDetail(eid); }
+function removeDoc(eid,idx){ APR.removeDoc(eid,idx); openEventDetail(eid); }
 
+// ── AUTO-SCHEDULE ─────────────────────────────────────────────────
 function triggerAutomate(eid){
-  const e = evts.find(x=>x.id===eid);
-  const milestones = [
-    {label:'Social media announcement',daysOut:28,color:'#185FA5'},
-    {label:'Volunteer outreach email',daysOut:21,color:'#D85A30'},
-    {label:'Registration opens',daysOut:14,color:'#0F6E56'},
-    {label:'Social media reminder',daysOut:7,color:'#185FA5'},
-    {label:'Staff briefing',daysOut:3,color:'#534AB7'},
-    {label:'Reminder email to registrants',daysOut:1,color:'#0F6E56'},
-  ];
-  // Remove previous auto events for this event
-  evts = evts.filter(x=>!(x.isAuto && x.parentId===eid));
-  if(e.date && e.date !== 'TBD'){
-    const base = new Date(e.date);
-    milestones.forEach(m=>{
-      const md = new Date(base); md.setDate(md.getDate()-m.daysOut);
-      evts.push({id:evts.length,name:`[${e.name}] ${m.label}`,dept:e.dept,date:md.toISOString().slice(0,10),time:'9:00 AM',loc:'—',staff:e.staff,status:'Scheduled',desc:'Auto-scheduled milestone',checklist:[],docs:[],autoEvents:[],isAuto:true,parentId:eid});
-    });
-  }
-  e.autoEvents = milestones;
-  toast(`6 milestones pushed to calendar for "${e.name}"!`);
+  const n=APR.scheduleAutoEvents(eid);
+  if(!n){ toast('Please set an event date first.'); return; }
+  toast(`${n} milestone dates pushed to calendar.`);
   openEventDetail(eid);
 }
 
 // ── STAFF ─────────────────────────────────────────────────────────
 function renderStaff(f){
-  const rows = staffList.filter(s=>f==='All'||s.dept===f);
-  document.getElementById('stf-tbody').innerHTML = rows.map(s=>`
+  const rows=APR.getStaff().filter(s=>f==='All'||s.dept===f);
+  document.getElementById('stf-tbody').innerHTML=rows.map(s=>`
     <tr>
       <td><div style="display:flex;align-items:center;gap:7px">
         <div class="av ${avCls(s.dept)}" style="width:26px;height:26px;font-size:9px">${s.ini}</div>
@@ -728,104 +834,81 @@ function renderStaff(f){
 function fStf(f,el){ document.querySelectorAll('#page-staff .fb').forEach(b=>b.classList.remove('on')); el.classList.add('on'); renderStaff(f); }
 
 function saveStaff(){
-  const first = document.getElementById('ns-first').value.trim();
-  const last = document.getElementById('ns-last').value.trim();
+  const first=document.getElementById('ns-first').value.trim();
+  const last=document.getElementById('ns-last').value.trim();
   if(!first||!last){ toast('Please enter first and last name.'); return; }
-  const dept = document.getElementById('ns-dept').value === 'Recreation' ? 'Rec' : document.getElementById('ns-dept').value;
-  const ini = (first[0]+(last[0]||'')).toUpperCase();
-  staffList.push({id:staffList.length,first,last,ini,dept,role:document.getElementById('ns-role').value,specs:document.getElementById('ns-specs').value,evts:0,email:document.getElementById('ns-email').value,phone:document.getElementById('ns-phone').value});
+  APR.addStaff({first,last,dept:document.getElementById('ns-dept').value,role:document.getElementById('ns-role').value,specs:document.getElementById('ns-specs').value,email:document.getElementById('ns-email').value,phone:document.getElementById('ns-phone').value});
   ['ns-first','ns-last','ns-role','ns-specs','ns-email','ns-phone'].forEach(id=>document.getElementById(id).value='');
-  closeModal('staff');
-  renderStaff('All');
-  renderDashboard();
-  goPage('staff');
+  closeModal('staff'); renderStaff('All'); renderDashboard(); goPage('staff');
   toast(`${first} ${last} added to staff.`);
 }
-
 function editStaff(id){
-  editStaffId = id;
-  const s = staffList.find(x=>x.id===id);
-  document.getElementById('es-first').value = s.first;
-  document.getElementById('es-last').value = s.last;
-  document.getElementById('es-dept').value = s.dept==='Rec'?'Recreation':s.dept;
-  document.getElementById('es-role').value = s.role;
-  document.getElementById('es-specs').value = s.specs;
-  document.getElementById('es-email').value = s.email;
-  document.getElementById('es-phone').value = s.phone||'';
+  editStaffId=id;
+  const s=APR.getStaffMember(id);
+  document.getElementById('es-first').value=s.first;
+  document.getElementById('es-last').value=s.last;
+  document.getElementById('es-dept').value=s.dept==='Rec'?'Recreation':s.dept;
+  document.getElementById('es-role').value=s.role;
+  document.getElementById('es-specs').value=s.specs;
+  document.getElementById('es-email').value=s.email;
+  document.getElementById('es-phone').value=s.phone||'';
   openModal('edit-staff');
 }
 function updateStaff(){
-  const s = staffList.find(x=>x.id===editStaffId);
-  s.first = document.getElementById('es-first').value;
-  s.last = document.getElementById('es-last').value;
-  s.dept = document.getElementById('es-dept').value==='Recreation'?'Rec':document.getElementById('es-dept').value;
-  s.ini = (s.first[0]+(s.last[0]||'')).toUpperCase();
-  s.role = document.getElementById('es-role').value;
-  s.specs = document.getElementById('es-specs').value;
-  s.email = document.getElementById('es-email').value;
-  s.phone = document.getElementById('es-phone').value;
-  closeModal('edit-staff');
-  renderStaff('All');
-  renderDashboard();
-  toast('Staff member updated.');
+  APR.updateStaff(editStaffId,{first:document.getElementById('es-first').value,last:document.getElementById('es-last').value,dept:document.getElementById('es-dept').value,role:document.getElementById('es-role').value,specs:document.getElementById('es-specs').value,email:document.getElementById('es-email').value,phone:document.getElementById('es-phone').value});
+  closeModal('edit-staff'); renderStaff('All'); renderDashboard(); toast('Staff member updated.');
 }
 function deleteStaff(){
-  const s = staffList.find(x=>x.id===editStaffId);
+  const s=APR.getStaffMember(editStaffId);
   if(!confirm(`Remove ${s.first} ${s.last} from staff?`)) return;
-  staffList = staffList.filter(x=>x.id!==editStaffId);
-  closeModal('edit-staff');
-  renderStaff('All');
-  renderDashboard();
-  toast('Staff member removed.');
+  APR.deleteStaff(editStaffId);
+  closeModal('edit-staff'); renderStaff('All'); renderDashboard(); toast('Staff member removed.');
 }
 
-// ── EVENTS (add) ─────────────────────────────────────────────────
+// ── ADD EVENT ─────────────────────────────────────────────────────
 function saveEvent(){
-  const name = document.getElementById('ne-name').value.trim();
+  const name=document.getElementById('ne-name').value.trim();
   if(!name){ toast('Please enter an event name.'); return; }
-  const dept = document.getElementById('ne-dept').value==='Recreation'?'Rec':document.getElementById('ne-dept').value;
-  const auto = document.getElementById('ne-auto').checked;
-  const newId = evts.length;
-  const newEvt = {id:newId,name,dept,date:document.getElementById('ne-date').value||'TBD',time:document.getElementById('ne-time').value||'TBD',loc:document.getElementById('ne-loc').value||'TBD',staff:document.getElementById('ne-staff-sel').value,status:document.getElementById('ne-status').value,desc:document.getElementById('ne-desc').value,checklist:[{t:'Book venue',done:false},{t:'Confirm staff',done:false},{t:'Promote event',done:false}],docs:[],autoEvents:[],isAuto:false};
-  evts.push(newEvt);
+  const timeRaw=document.getElementById('ne-time').value;
+  const evt=APR.addEvent({
+    name,
+    dept:   document.getElementById('ne-dept').value,
+    status: document.getElementById('ne-status').value,
+    date:   document.getElementById('ne-date').value,
+    time:   timeRaw?fmt12(timeRaw):'TBD',
+    loc:    document.getElementById('ne-loc').value,
+    staff:  document.getElementById('ne-staff-sel').value,
+    desc:   document.getElementById('ne-desc').value,
+  });
+  const auto=document.getElementById('ne-auto').checked;
   closeModal('event');
-  if(auto && newEvt.date !== 'TBD') triggerAutomate(newId);
-  else toast(`"${name}" added.`);
-  renderEvts('All');
-  goPage('events');
+  if(auto && evt.date!=='TBD') triggerAutomate(evt.id);
+  else toast(`"${name}" saved.`);
+  renderEvts('All'); goPage('events');
 }
 
 // ── CALENDAR ──────────────────────────────────────────────────────
-function setCalView(v,el){
-  calView=v;
-  document.querySelectorAll('.cal-vbtn').forEach(b=>b.classList.remove('on'));
-  el.classList.add('on');
-  renderCal();
-}
+function setCalView(v,el){ calView=v; document.querySelectorAll('.cal-vbtn').forEach(b=>b.classList.remove('on')); el.classList.add('on'); renderCal(); }
 function calNav(d){
   if(calView==='month'){ calMonth+=d; if(calMonth>11){calMonth=0;calYear++;} if(calMonth<0){calMonth=11;calYear--;} }
   else if(calView==='week'){ calDay+=d*7; normDate(); }
-  else if(calView==='day'){ calDay+=d; normDate(); }
+  else if(calView==='day'){  calDay+=d;   normDate(); }
   else if(calView==='year'){ calYear+=d; }
   renderCal();
 }
-function normDate(){
-  const d=new Date(calYear,calMonth,calDay);
-  calYear=d.getFullYear(); calMonth=d.getMonth(); calDay=d.getDate();
-}
+function normDate(){ const d=new Date(calYear,calMonth,calDay); calYear=d.getFullYear(); calMonth=d.getMonth(); calDay=d.getDate(); }
 function calToday(){ const t=new Date(); calYear=t.getFullYear(); calMonth=t.getMonth(); calDay=t.getDate(); renderCal(); }
 
 function getEvtsForDate(y,m,d){
   const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-  return evts.filter(e=>e.date===ds);
+  return APR.getEvents().filter(e=>e.date===ds);
 }
 
 function renderCal(){
-  const body = document.getElementById('cal-body');
-  const today = new Date();
-
+  const body=document.getElementById('cal-body');
+  const today=new Date();
   if(calView==='month'){
-    document.getElementById('cal-nav-label').textContent = MONTHS[calMonth]+' '+calYear;
+    document.getElementById('cal-nav-label').textContent=MONTHS[calMonth]+' '+calYear;
     const first=new Date(calYear,calMonth,1).getDay(), total=new Date(calYear,calMonth+1,0).getDate();
     const prevTotal=new Date(calYear,calMonth,0).getDate();
     let h=`<div class="month-grid">`;
@@ -842,13 +925,10 @@ function renderCal(){
     }
     const rem=(7-(first+total)%7)%7;
     for(let i=1;i<=rem;i++) h+=`<div class="month-cell other-month"><div class="day-num">${i}</div></div>`;
-    h+=`</div>`;
-    body.innerHTML=h;
-
+    h+=`</div>`; body.innerHTML=h;
   } else if(calView==='week'){
     normDate();
-    const sw=new Date(calYear,calMonth,calDay);
-    sw.setDate(sw.getDate()-sw.getDay());
+    const sw=new Date(calYear,calMonth,calDay); sw.setDate(sw.getDate()-sw.getDay());
     const wds=Array.from({length:7},(_,i)=>{const d=new Date(sw);d.setDate(d.getDate()+i);return d;});
     document.getElementById('cal-nav-label').textContent=`Week of ${MONTHS[wds[0].getMonth()]} ${wds[0].getDate()}`;
     const hours=Array.from({length:14},(_,i)=>i+7);
@@ -864,9 +944,9 @@ function renderCal(){
       wds.forEach(d=>{
         const des=getEvtsForDate(d.getFullYear(),d.getMonth(),d.getDate()).filter(e=>{
           const t=e.time; if(!t||t==='TBD') return false;
-          const hh=parseInt(t); const isPM=t.includes('PM');
-          const h24=isPM&&hh!==12?hh+12:(!isPM&&hh===12?0:hh);
-          return h24===hr;
+          const m=t.match(/(\d+):(\d+)\s*(AM|PM)/i); if(!m) return false;
+          let hh=parseInt(m[1]); if(m[3].toUpperCase()==='PM'&&hh!==12)hh+=12; if(m[3].toUpperCase()==='AM'&&hh===12)hh=0;
+          return hh===hr;
         });
         const isT=d.toDateString()===today.toDateString();
         h+=`<div class="wc-cell${isT?' today-col':''}">
@@ -874,9 +954,7 @@ function renderCal(){
         </div>`;
       });
     });
-    h+=`</div></div>`;
-    body.innerHTML=h;
-
+    h+=`</div></div>`; body.innerHTML=h;
   } else if(calView==='day'){
     normDate();
     const d=new Date(calYear,calMonth,calDay);
@@ -888,9 +966,9 @@ function renderCal(){
       const label=hr<12?`${hr}:00 am`:hr===12?'12:00 pm':`${hr-12}:00 pm`;
       const matching=des.filter(e=>{
         const t=e.time; if(!t||t==='TBD') return hr===9;
-        const hh=parseInt(t); const isPM=t.includes('PM');
-        const h24=isPM&&hh!==12?hh+12:(!isPM&&hh===12?0:hh);
-        return h24===hr;
+        const m=t.match(/(\d+):(\d+)\s*(AM|PM)/i); if(!m) return false;
+        let hh=parseInt(m[1]); if(m[3].toUpperCase()==='PM'&&hh!==12)hh+=12; if(m[3].toUpperCase()==='AM'&&hh===12)hh=0;
+        return hh===hr;
       });
       h+=`<div class="day-hour">
         <div class="hour-label">${label}</div>
@@ -900,9 +978,7 @@ function renderCal(){
           </div>`).join('')}</div>
       </div>`;
     });
-    h+=`</div>`;
-    body.innerHTML=h;
-
+    h+=`</div>`; body.innerHTML=h;
   } else if(calView==='year'){
     document.getElementById('cal-nav-label').textContent=`${calYear}`;
     let h=`<div class="year-grid">`;
@@ -916,38 +992,28 @@ function renderCal(){
         const isT=today.getFullYear()===calYear&&today.getMonth()===m&&today.getDate()===d;
         mh+=`<div class="ym-cell${des.length?' has-ev':''}${isT?' today-d':''}" onclick="${(des.length||isT)?`goToDay(${d},${m},${calYear})`:''}" title="${des.length?des.map(e=>e.name).join(', '):''}">${d}</div>`;
       }
-      mh+=`</div></div>`;
-      h+=mh;
+      mh+=`</div></div>`; h+=mh;
     }
-    h+=`</div>`;
-    body.innerHTML=h;
+    h+=`</div>`; body.innerHTML=h;
   }
 }
-
-function clickDay(d,m,y){
-  calDay=d; if(m!==undefined)calMonth=m; if(y!==undefined)calYear=y;
-  calView='day';
-  document.querySelectorAll('.cal-vbtn').forEach(b=>b.classList.remove('on'));
-  document.querySelectorAll('.cal-vbtn')[2].classList.add('on');
-  renderCal();
-}
+function clickDay(d,m,y){ calDay=d; if(m!==undefined)calMonth=m; if(y!==undefined)calYear=y; calView='day'; document.querySelectorAll('.cal-vbtn').forEach(b=>b.classList.remove('on')); document.querySelectorAll('.cal-vbtn')[2].classList.add('on'); renderCal(); }
 function goToDay(d,m,y){ clickDay(d,m,y); }
 
 // ── MODALS ────────────────────────────────────────────────────────
 function openModal(t){
   if(t==='event'){
-    document.getElementById('ne-staff-sel').innerHTML = staffList.map(s=>`<option>${s.first} ${s.last}</option>`).join('');
+    document.getElementById('ne-staff-sel').innerHTML=APR.getStaff().map(s=>`<option>${s.first} ${s.last}</option>`).join('');
     document.getElementById('ne-name').value='';
     document.getElementById('ne-desc').value='';
     document.getElementById('ne-date').value='';
     document.getElementById('ne-auto').checked=false;
   }
   document.getElementById('modal-'+t).classList.add('open');
-  document.getElementById('modal-'+t).querySelector('input,select')?.focus();
+  setTimeout(()=>document.getElementById('modal-'+t).querySelector('input,select')?.focus(),50);
 }
 function closeModal(t){ document.getElementById('modal-'+t).classList.remove('open'); }
 
-// close modal on bg click
 document.querySelectorAll('.modal-bg').forEach(bg=>{
   bg.addEventListener('click',e=>{ if(e.target===bg) bg.classList.remove('open'); });
 });
