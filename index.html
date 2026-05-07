@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Athens City APR — Staff Portal</title>
+<style>
+:root{
+  --bg-primary:#ffffff;--bg-secondary:#f7f7f8;--bg-tertiary:#f0f0f2;
+  --text-primary:#1a1a1a;--text-secondary:#5a5a6a;--text-tertiary:#9090a0;
+  --border-primary:#e2e2e8;--border-secondary:#d0d0da;
+  --accent:#185FA5;--accent-hover:#0C447C;--accent-light:#E6F1FB;
+  --arts-bg:#EEEDFE;--arts-color:#3C3489;--arts-dot:#534AB7;
+  --parks-bg:#E1F5EE;--parks-color:#085041;--parks-dot:#0F6E56;
+  --rec-bg:#FAECE7;--rec-color:#712B13;--rec-dot:#D85A30;
+  --sched-bg:#EAF3DE;--sched-color:#27500A;
+  --draft-bg:#f0f0f2;--draft-color:#5a5a6a;
+  --cancel-bg:#FCEBEB;--cancel-color:#791F1F;
+  --auto-color:#378ADD;
+  --radius:8px;--radius-lg:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;color:var(--text-primary);background:var(--bg-tertiary)}
+.app{display:flex;height:100vh;min-height:700px;overflow:hidden;position:relative}
+.sidebar{width:192px;min-width:192px;background:var(--bg-primary);border-right:1px solid var(--border-primary);display:flex;flex-direction:column;z-index:10;overflow-y:auto}
+.logo-area{padding:16px;border-bottom:1px solid var(--border-primary)}
+.logo-name{font-size:14px;font-weight:700;color:var(--text-primary)}
+.logo-org{font-size:11px;color:var(--text-secondary);margin-top:1px}
+.logo-sub{font-size:10px;color:var(--text-tertiary);margin-top:2px}
+.nav-sec{font-size:9px;font-weight:700;color:var(--text-tertiary);letter-spacing:.1em;text-transform:uppercase;padding:12px 16px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;cursor:pointer;font-size:12px;color:var(--text-secondary);border-left:2px solid transparent;transition:all .15s}
+.nav-item:hover{background:var(--bg-secondary);color:var(--text-primary)}
+.nav-item.active{background:var(--bg-secondary);color:var(--accent);border-left-color:var(--accent);font-weight:600}
+.nav-icon{width:15px;height:15px;flex-shrink:0;opacity:.65}
+.nav-item.active .nav-icon,.nav-item:hover .nav-icon{opacity:1}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg-tertiary)}
+.topbar{padding:12px 20px;border-bottom:1px solid var(--border-primary);display:flex;align-items:center;justify-content:space-between;background:var(--bg-primary);flex-shrink:0}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.back-btn{display:none;align-items:center;gap:4px;font-size:12px;color:var(--text-secondary);cursor:pointer;padding:4px 10px;border:1px solid var(--border-secondary);border-radius:6px;background:transparent;font-family:inherit}
+.back-btn:hover{background:var(--bg-secondary)}
+.back-btn.show{display:flex}
+.topbar-title{font-size:15px;font-weight:700}
+.topbar-actions{display:flex;gap:6px}
+.btn{padding:6px 13px;font-size:12px;border:1px solid var(--border-secondary);border-radius:6px;cursor:pointer;background:transparent;color:var(--text-primary);font-family:inherit;transition:all .15s}
+.btn:hover{background:var(--bg-secondary)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn-sm{padding:3px 9px;font-size:11px}
+.btn-danger{color:#A32D2D;border-color:#F09595}
+.btn-danger:hover{background:#FCEBEB}
+.scroll-area{flex:1;overflow-y:auto;padding:18px 20px}
+.page{display:none}.page.active{display:block}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.metric{background:var(--bg-primary);border-radius:var(--radius);padding:12px 14px;border:1px solid var(--border-primary)}
+.metric-label{font-size:10px;color:var(--text-secondary);margin-bottom:3px}
+.metric-val{font-size:22px;font-weight:700}
+.metric-sub{font-size:10px;color:var(--text-tertiary);margin-top:2px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.card{background:var(--bg-primary);border:1px solid var(--border-primary);border-radius:var(--radius-lg);padding:14px}
+.card-title{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.badge{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:600;white-space:nowrap;display:inline-block}
+.ba{background:var(--arts-bg);color:var(--arts-color)}
+.bp{background:var(--parks-bg);color:var(--parks-color)}
+.br{background:var(--rec-bg);color:var(--rec-color)}
+.bs{background:var(--sched-bg);color:var(--sched-color)}
+.bd{background:var(--draft-bg);color:var(--draft-color)}
+.bc{background:var(--cancel-bg);color:var(--cancel-color)}
+.event-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border-primary);cursor:pointer}
+.event-row:last-child{border-bottom:none}
+.event-row:hover .evt-name{color:var(--accent);text-decoration:underline}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.da{background:var(--arts-dot)}.dp{background:var(--parks-dot)}.dr{background:var(--rec-dot)}
+.evt-name{font-size:12px;font-weight:600;flex:1}
+.evt-meta{font-size:10px;color:var(--text-secondary)}
+.staff-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border-primary)}
+.staff-row:last-child{border-bottom:none}
+.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.ava{background:var(--arts-bg);color:var(--arts-color)}
+.avp{background:var(--parks-bg);color:var(--parks-color)}
+.avr{background:var(--rec-bg);color:var(--rec-color)}
+.filter-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.fb{padding:4px 11px;font-size:11px;border:1px solid var(--border-secondary);border-radius:8px;cursor:pointer;background:transparent;color:var(--text-secondary);font-family:inherit;transition:all .15s}
+.fb.on,.fb:hover{background:var(--accent-light);color:var(--accent);border-color:#85B7EB}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px 10px;font-size:10px;font-weight:700;color:var(--text-secondary);border-bottom:1px solid var(--border-primary);white-space:nowrap;background:var(--bg-secondary)}
+td{padding:9px 10px;border-bottom:1px solid var(--border-primary);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg-secondary)}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:flex-start;justify-content:center;padding-top:50px}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg-primary);border-radius:var(--radius-lg);border:1px solid var(--border-primary);padding:22px;width:480px;max-width:96vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.modal h3{font-size:15px;font-weight:700;margin-bottom:16px}
+.fg{margin-bottom:11px}
+.fl{font-size:11px;color:var(--text-secondary);margin-bottom:4px;display:block;font-weight:500}
+.fg input,.fg select,.fg textarea{width:100%;font-size:12px;padding:7px 10px;border:1px solid var(--border-secondary);border-radius:6px;background:var(--bg-primary);color:var(--text-primary);font-family:inherit;outline:none}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-light)}
+.fg textarea{resize:vertical;min-height:56px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;border-top:1px solid var(--border-primary);padding-top:14px}
+/* Event detail */
+.detail-header{background:var(--bg-primary);border:1px solid var(--border-primary);border-radius:var(--radius-lg);padding:18px;margin-bottom:14px}
+.detail-title{font-size:20px;font-weight:800;margin-bottom:8px}
+.detail-meta-row{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--text-secondary);margin-bottom:10px}
+.detail-meta-row span{display:flex;align-items:center;gap:4px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.checklist-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-primary)}
+.checklist-item:last-child{border-bottom:none}
+.checklist-item input[type=checkbox]{width:15px;height:15px;cursor:pointer;flex-shrink:0;accent-color:var(--accent)}
+.checklist-item label{font-size:12px;cursor:pointer;flex:1;transition:all .15s}
+.checklist-item label.done{text-decoration:line-through;color:var(--text-tertiary)}
+.add-item-row{display:flex;gap:6px;margin-top:10px}
+.add-item-row input{flex:1;font-size:12px;padding:6px 9px;border:1px solid var(--border-secondary);border-radius:6px;background:var(--bg-primary);color:var(--text-primary);font-family:inherit;outline:none}
+.add-item-row input:focus{border-color:var(--accent)}
+/* Gantt */
+.gantt-wrap{overflow-x:auto;padding-bottom:4px}
+.gantt-header{display:flex;margin-bottom:4px}
+.gantt-header-label{width:145px;min-width:145px}
+.gantt-weeks{flex:1;display:flex}
+.gantt-week{flex:1;font-size:9px;color:var(--text-tertiary);text-align:center;border-left:1px solid var(--border-primary);padding:2px 0}
+.gantt-row{display:flex;align-items:center;margin-bottom:4px}
+.gantt-label{width:145px;min-width:145px;font-size:11px;color:var(--text-secondary);padding-right:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gantt-track{flex:1;background:var(--bg-secondary);height:22px;border-radius:4px;position:relative;overflow:hidden}
+.gantt-bar{position:absolute;height:100%;border-radius:4px;display:flex;align-items:center;padding:0 6px;font-size:9px;font-weight:700;color:#fff;overflow:hidden;white-space:nowrap;transition:opacity .2s}
+.gantt-bar:hover{opacity:.85}
+/* Docs */
+.doc-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-primary);cursor:default}
+.doc-item:last-child{border-bottom:none}
+.doc-icon{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0}
+.doc-name{font-size:12px;font-weight:600}
+.doc-meta{font-size:10px;color:var(--text-secondary)}
+/* Auto milestones */
+.auto-item{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid var(--border-primary)}
+.auto-item:last-child{border-bottom:none}
+.auto-dot{width:9px;height:9px;border-radius:50%;margin-top:3px;flex-shrink:0}
+.auto-label{font-size:12px;font-weight:600}
+.auto-date{font-size:10px;color:var(--text-secondary);margin-top:1px}
+/* Calendar */
+.cal-view-btns{display:flex;border:1px solid var(--border-secondary);border-radius:7px;overflow:hidden}
+.cal-vbtn{padding:6px 14px;font-size:12px;cursor:pointer;background:transparent;color:var(--text-secondary);border:none;border-right:1px solid var(--border-secondary);font-family:inherit;font-weight:500;transition:all .15s}
+.cal-vbtn:last-child{border-right:none}
+.cal-vbtn.on{background:var(--accent);color:#fff}
+.cal-vbtn:hover:not(.on){background:var(--bg-secondary)}
+.cal-nav{display:flex;align-items:center;gap:10px}
+.cal-nav-label{font-size:15px;font-weight:700;min-width:180px;text-align:center}
+.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border-primary);border:1px solid var(--border-primary);border-radius:var(--radius-lg);overflow:hidden}
+.month-cell{background:var(--bg-primary);min-height:84px;padding:5px;cursor:pointer;transition:background .1s}
+.month-cell:hover{background:var(--bg-secondary)}
+.month-cell.other-month{background:var(--bg-tertiary)}
+.month-cell.other-month .day-num{color:var(--text-tertiary)}
+.month-cell.today{background:var(--accent-light)}
+.day-num{font-size:11px;font-weight:700;margin-bottom:3px;color:var(--text-secondary)}
+.month-cell.today .day-num{color:var(--accent)}
+.cal-chip{font-size:9px;padding:2px 5px;border-radius:3px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;cursor:pointer;transition:opacity .1s}
+.cal-chip:hover{opacity:.8}
+.day-view-wrap{background:var(--bg-primary);border:1px solid var(--border-primary);border-radius:var(--radius-lg);overflow:hidden}
+.day-hour{display:flex;border-bottom:1px solid var(--border-primary);min-height:46px}
+.day-hour:last-child{border-bottom:none}
+.hour-label{width:52px;flex-shrink:0;font-size:9px;color:var(--text-tertiary);padding:5px 7px;border-right:1px solid var(--border-primary);background:var(--bg-secondary)}
+.hour-content{flex:1;padding:4px 8px}
+.year-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.year-month{background:var(--bg-primary);border:1px solid var(--border-primary);border-radius:var(--radius);padding:10px}
+.ym-title{font-size:11px;font-weight:700;margin-bottom:6px;color:var(--text-secondary)}
+.ym-mini{display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
+.ym-cell{font-size:8px;text-align:center;padding:2px 1px;border-radius:2px;color:var(--text-tertiary)}
+.ym-cell.has-ev{background:var(--accent-light);color:var(--accent);font-weight:700;cursor:pointer}
+.ym-cell.today-d{background:var(--accent);color:#fff;font-weight:700}
+/* Progress */
+.progress-bar{height:5px;background:var(--bg-secondary);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .4s}
+/* Week calendar */
+.week-cal-wrap{background:var(--bg-primary);border:1px solid var(--border-primary);border-radius:var(--radius-lg);overflow:auto}
+.week-cal-grid{display:grid;grid-template-columns:52px repeat(7,1fr);min-width:600px}
+.wc-header{background:var(--bg-secondary);padding:7px 4px;text-align:center;font-size:10px;font-weight:700;color:var(--text-secondary);border-bottom:1px solid var(--border-primary);border-right:1px solid var(--border-primary)}
+.wc-time{padding:3px 6px;text-align:right;font-size:9px;color:var(--text-tertiary);border-right:1px solid var(--border-primary);border-bottom:1px solid var(--border-primary);height:42px;display:flex;align-items:flex-start;padding-top:4px;background:var(--bg-secondary)}
+.wc-cell{border-right:1px solid var(--border-primary);border-bottom:1px solid var(--border-primary);height:42px;padding:2px 3px;overflow:hidden}
+.wc-cell.today-col{background:var(--accent-light)}
+.legend-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary)}
+.leg-dot{width:8px;height:8px;border-radius:50%}
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:10px 20px;border-radius:8px;font-size:12px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-secondary);border-radius:3px}
+</style>
+</head>
+<body>
+
+<div class="app" id="APP">
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo-area">
+    <div class="logo-name">Athens City APR</div>
+    <div class="logo-org">Arts, Parks & Recreation</div>
+    <div class="logo-sub">Staff portal</div>
+  </div>
+  <div class="nav-sec">Overview</div>
+  <div class="nav-item active" data-p="dashboard" onclick="goPage('dashboard',this)">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4"/></svg>
+    Dashboard
+  </div>
+  <div class="nav-sec">Events</div>
+  <div class="nav-item" data-p="events" onclick="goPage('events',this)">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><rect x="1" y="2.5" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M4 1v3M10 1v3M1 6h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    All events
+  </div>
+  <div class="nav-item" data-p="calendar" onclick="goPage('calendar',this)">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="8" r="4.5" stroke="currentColor" stroke-width="1.4"/><path d="M7 6v2.5l1.5 1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M4.5 1.5h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    Calendar
+  </div>
+  <div class="nav-sec">Staff</div>
+  <div class="nav-item" data-p="staff" onclick="goPage('staff',this)">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><circle cx="5.5" cy="4.5" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M1 13c0-2.485 2.015-4.5 4.5-4.5s4.5 2.015 4.5 4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M10.5 6.5c.966 0 1.75.784 1.75 1.75V13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="11.5" cy="3.5" r="1.5" stroke="currentColor" stroke-width="1.4"/></svg>
+    Instructors & staff
+  </div>
+  <div class="nav-item" data-p="schedule" onclick="goPage('schedule',this)">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><rect x="1" y="1.5" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M1 5.5h12M4.5 1.5v4M9.5 1.5v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    Staff schedule
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="back-btn" id="back-btn" onclick="goBack()">&#8592; Back</button>
+      <span class="topbar-title" id="page-title">Dashboard</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn" onclick="openModal('event')">+ New event</button>
+      <button class="btn btn-primary" onclick="openModal('staff')">+ Add staff</button>
+    </div>
+  </div>
+
+  <div class="scroll-area" id="scroll-area">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Events this month</div><div class="metric-val">18</div><div class="metric-sub">+3 from last month</div></div>
+        <div class="metric"><div class="metric-label">Active instructors</div><div class="metric-val" id="staff-count">7</div><div class="metric-sub">3 departments</div></div>
+        <div class="metric"><div class="metric-label">Upcoming (7 days)</div><div class="metric-val">5</div><div class="metric-sub">Next: May 5</div></div>
+        <div class="metric"><div class="metric-label">Draft events</div><div class="metric-val" id="draft-count">3</div><div class="metric-sub">Pending review</div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Upcoming events <span style="font-size:10px;font-weight:400;color:var(--text-tertiary)">May 2026</span></div>
+          <div id="dash-events"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Staff on deck this week</div>
+          <div id="dash-staff"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Department activity — May</div>
+        <div style="display:flex;gap:16px;padding-top:4px">
+          <div style="flex:1"><div style="font-size:10px;color:var(--text-secondary);margin-bottom:5px">Arts</div><div class="progress-bar"><div class="progress-fill" style="width:44%;background:var(--arts-dot)"></div></div><div style="font-size:10px;color:var(--arts-color);margin-top:4px">8 events</div></div>
+          <div style="flex:1"><div style="font-size:10px;color:var(--text-secondary);margin-bottom:5px">Parks</div><div class="progress-bar"><div class="progress-fill" style="width:28%;background:var(--parks-dot)"></div></div><div style="font-size:10px;color:var(--parks-color);margin-top:4px">5 events</div></div>
+          <div style="flex:1"><div style="font-size:10px;color:var(--text-secondary);margin-bottom:5px">Recreation</div><div class="progress-bar"><div class="progress-fill" style="width:28%;background:var(--rec-dot)"></div></div><div style="font-size:10px;color:var(--rec-color);margin-top:4px">5 events</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALL EVENTS -->
+    <div class="page" id="page-events">
+      <div class="filter-row">
+        <button class="fb on" onclick="fEvt('All',this)">All</button>
+        <button class="fb" onclick="fEvt('Arts',this)">Arts</button>
+        <button class="fb" onclick="fEvt('Parks',this)">Parks</button>
+        <button class="fb" onclick="fEvt('Rec',this)">Recreation</button>
+        <button class="fb" onclick="fEvt('Draft',this)">Draft</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table><thead><tr><th style="width:28%">Event</th><th style="width:9%">Dept</th><th style="width:11%">Date</th><th style="width:9%">Time</th><th style="width:17%">Location</th><th style="width:13%">Lead staff</th><th style="width:8%">Status</th><th style="width:5%"></th></tr></thead>
+        <tbody id="evt-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- EVENT DETAIL -->
+    <div class="page" id="page-event-detail">
+      <div id="detail-content"></div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="page" id="page-calendar">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+        <div class="cal-view-btns">
+          <button class="cal-vbtn on" onclick="setCalView('month',this)">Month</button>
+          <button class="cal-vbtn" onclick="setCalView('week',this)">Week</button>
+          <button class="cal-vbtn" onclick="setCalView('day',this)">Day</button>
+          <button class="cal-vbtn" onclick="setCalView('year',this)">Year</button>
+        </div>
+        <div class="cal-nav">
+          <button class="btn" onclick="calNav(-1)">&#8592;</button>
+          <span class="cal-nav-label" id="cal-nav-label"></span>
+          <button class="btn" onclick="calNav(1)">&#8594;</button>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="calToday()">Today</button>
+      </div>
+      <div id="cal-body"></div>
+      <div class="legend-row">
+        <div class="leg"><div class="leg-dot" style="background:var(--arts-dot)"></div>Arts</div>
+        <div class="leg"><div class="leg-dot" style="background:var(--parks-dot)"></div>Parks</div>
+        <div class="leg"><div class="leg-dot" style="background:var(--rec-dot)"></div>Recreation</div>
+        <div class="leg"><div class="leg-dot" style="background:var(--auto-color)"></div>Auto-scheduled</div>
+      </div>
+    </div>
+
+    <!-- STAFF -->
+    <div class="page" id="page-staff">
+      <div class="filter-row">
+        <button class="fb on" onclick="fStf('All',this)">All</button>
+        <button class="fb" onclick="fStf('Arts',this)">Arts</button>
+        <button class="fb" onclick="fStf('Parks',this)">Parks</button>
+        <button class="fb" onclick="fStf('Rec',this)">Recreation</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table><thead><tr><th style="width:20%">Name</th><th style="width:18%">Role</th><th style="width:9%">Dept</th><th style="width:22%">Specialties</th><th style="width:7%">Events</th><th style="width:15%">Email</th><th style="width:9%">Actions</th></tr></thead>
+        <tbody id="stf-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- SCHEDULE -->
+    <div class="page" id="page-schedule">
+      <div class="card" style="padding:0;overflow:auto">
+        <table style="table-layout:fixed;min-width:600px">
+          <thead><tr><th style="width:13%">Staff</th><th>Mon 5/5</th><th>Tue 5/6</th><th>Wed 5/7</th><th>Thu 5/8</th><th>Fri 5/9</th><th>Sat 5/10</th></tr></thead>
+          <tbody>
+            <tr><td><div style="display:flex;align-items:center;gap:5px"><div class="av ava" style="width:22px;height:22px;font-size:8px">LM</div>Laura M.</div></td><td><span class="badge ba">Watercolor 10am</span></td><td>—</td><td>—</td><td><span class="badge ba">Life drawing 6pm</span></td><td>—</td><td>—</td></tr>
+            <tr><td><div style="display:flex;align-items:center;gap:5px"><div class="av avp" style="width:22px;height:22px;font-size:8px">KJ</div>Kevin J.</div></td><td>—</td><td>—</td><td><span class="badge bp">Trail walk 9am</span></td><td>—</td><td>—</td><td><span class="badge bp">Nature tour 10am</span></td></tr>
+            <tr><td><div style="display:flex;align-items:center;gap:5px"><div class="av avr" style="width:22px;height:22px;font-size:8px">DC</div>Dana C.</div></td><td>—</td><td><span class="badge br">Volleyball 3pm</span></td><td>—</td><td>—</td><td><span class="badge br">Soccer 2pm</span></td><td><span class="badge br">Soccer 2pm</span></td></tr>
+            <tr><td><div style="display:flex;align-items:center;gap:5px"><div class="av ava" style="width:22px;height:22px;font-size:8px">TP</div>Tom P.</div></td><td>—</td><td>—</td><td><span class="badge ba">Pottery 6pm</span></td><td>—</td><td><span class="badge ba">Pottery 6pm</span></td><td>—</td></tr>
+            <tr><td><div style="display:flex;align-items:center;gap:5px"><div class="av avr" style="width:22px;height:22px;font-size:8px">SN</div>Sara N.</div></td><td><span class="badge br">Swim 7am</span></td><td><span class="badge br">Swim 7am</span></td><td><span class="badge br">Swim 7am</span></td><td><span class="badge br">Swim 7am</span></td><td><span class="badge br">Swim 7am</span></td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- end scroll-area -->
+</div><!-- end main -->
+
+<!-- MODALS -->
+<div class="modal-bg" id="modal-event">
+  <div class="modal">
+    <h3 id="modal-event-title">Add new event</h3>
+    <div class="fg"><label class="fl">Event name</label><input type="text" id="ne-name" placeholder="e.g. Summer pottery series"/></div>
+    <div class="row2">
+      <div class="fg"><label class="fl">Department</label><select id="ne-dept"><option>Arts</option><option>Parks</option><option>Recreation</option></select></div>
+      <div class="fg"><label class="fl">Status</label><select id="ne-status"><option>Scheduled</option><option>Draft</option><option>Cancelled</option></select></div>
+      <div class="fg"><label class="fl">Date</label><input type="date" id="ne-date"/></div>
+      <div class="fg"><label class="fl">Time</label><input type="time" id="ne-time"/></div>
+    </div>
+    <div class="fg"><label class="fl">Location</label><input type="text" id="ne-loc" placeholder="e.g. APR Studio, Strouds Run"/></div>
+    <div class="fg"><label class="fl">Lead staff</label><select id="ne-staff-sel"></select></div>
+    <div class="fg"><label class="fl">Description</label><textarea id="ne-desc" placeholder="Brief description of this event..."></textarea></div>
+    <div class="fg" style="display:flex;align-items:center;gap:8px">
+      <input type="checkbox" id="ne-auto" style="width:15px;height:15px;accent-color:var(--accent)"/>
+      <label for="ne-auto" style="font-size:12px;cursor:pointer">Auto-populate calendar with prep milestones</label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('event')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEvent()">Save event</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-staff">
+  <div class="modal">
+    <h3>Add staff member</h3>
+    <div class="row2">
+      <div class="fg"><label class="fl">First name</label><input type="text" id="ns-first" placeholder="First"/></div>
+      <div class="fg"><label class="fl">Last name</label><input type="text" id="ns-last" placeholder="Last"/></div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label class="fl">Department</label><select id="ns-dept"><option>Arts</option><option>Parks</option><option>Recreation</option></select></div>
+      <div class="fg"><label class="fl">Role / title</label><input type="text" id="ns-role" placeholder="e.g. Ceramics instructor"/></div>
+    </div>
+    <div class="fg"><label class="fl">Specialties</label><input type="text" id="ns-specs" placeholder="e.g. Pottery, sculpture, wheel-throwing"/></div>
+    <div class="fg"><label class="fl">Email</label><input type="email" id="ns-email" placeholder="name@athens.gov"/></div>
+    <div class="fg"><label class="fl">Phone</label><input type="text" id="ns-phone" placeholder="(740) 555-0000"/></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('staff')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveStaff()">Add staff member</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-edit-staff">
+  <div class="modal">
+    <h3>Edit staff member</h3>
+    <div class="row2">
+      <div class="fg"><label class="fl">First name</label><input type="text" id="es-first"/></div>
+      <div class="fg"><label class="fl">Last name</label><input type="text" id="es-last"/></div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label class="fl">Department</label><select id="es-dept"><option>Arts</option><option>Parks</option><option>Recreation</option></select></div>
+      <div class="fg"><label class="fl">Role / title</label><input type="text" id="es-role"/></div>
+    </div>
+    <div class="fg"><label class="fl">Specialties</label><input type="text" id="es-specs"/></div>
+    <div class="fg"><label class="fl">Email</label><input type="email" id="es-email"/></div>
+    <div class="fg"><label class="fl">Phone</label><input type="text" id="es-phone"/></div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="deleteStaff()">Delete</button>
+      <button class="btn" onclick="closeModal('edit-staff')">Cancel</button>
+      <button class="btn btn-primary" onclick="updateStaff()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-doc">
+  <div class="modal">
+    <h3>Upload document</h3>
+    <div class="fg"><label class="fl">Document name</label><input type="text" id="doc-name" placeholder="e.g. Venue contract, budget sheet, flyer"/></div>
+    <div class="row2">
+      <div class="fg"><label class="fl">Type</label><select id="doc-type"><option>PDF</option><option>DOC</option><option>XLS</option><option>IMG</option><option>Other</option></select></div>
+      <div class="fg"><label class="fl">Date added</label><input type="date" id="doc-date"/></div>
+    </div>
+    <div class="fg"><label class="fl">Notes (optional)</label><input type="text" id="doc-notes" placeholder="Brief note about this file"/></div>
+    <div style="background:var(--bg-secondary);border:1.5px dashed var(--border-secondary);border-radius:8px;padding:22px;text-align:center;font-size:12px;color:var(--text-tertiary);margin-bottom:4px">
+      📎 File attachment is simulated in this prototype.<br>Connect to cloud storage to enable real uploads.
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('doc')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDoc()">Add document</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- end app -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────
+let evts = [
+  {id:0,name:'Watercolor workshop',dept:'Arts',date:'2026-05-05',time:'10:00 AM',loc:'Community Arts Center',staff:'Laura Mitchell',status:'Scheduled',desc:'A beginner-friendly watercolor session for adults and teens. All supplies provided.',checklist:[{t:'Book Community Arts Center',done:true},{t:'Order watercolor supply kits',done:true},{t:'Send staff confirmation to Laura',done:false},{t:'Post on social media',done:false},{t:'Send reminder emails',done:false}],docs:[{name:'Venue booking confirmation',type:'PDF',date:'Apr 10'},{name:'Supply order receipt',type:'PDF',date:'Apr 15'}],autoEvents:[],isAuto:false},
+  {id:1,name:'Strouds Run trail walk',dept:'Parks',date:'2026-05-07',time:'9:00 AM',loc:'Strouds Run SP',staff:'Kevin James',status:'Scheduled',desc:'A guided 2-mile trail walk through Strouds Run State Park. Appropriate for all fitness levels.',checklist:[{t:'Confirm park access with ranger station',done:true},{t:'Print trail maps',done:false},{t:'Check weather forecast',done:false},{t:'Volunteer outreach',done:false},{t:'Social media post',done:false}],docs:[],autoEvents:[],isAuto:false},
+  {id:2,name:'Youth soccer clinic',dept:'Rec',date:'2026-05-10',time:'2:00 PM',loc:'Memorial Stadium',staff:'Dana Carter',status:'Scheduled',desc:'A 2-hour youth soccer skills clinic for ages 8–16. Cones, balls, and pinnies provided.',checklist:[{t:'Reserve Memorial Stadium field',done:true},{t:'Recruit volunteer coaches',done:false},{t:'Send parent waivers',done:false},{t:'Post flyer on website',done:false},{t:'Buy snacks and water',done:false}],docs:[{name:'Participant waiver template',type:'DOC',date:'Apr 5'}],autoEvents:[],isAuto:false},
+  {id:3,name:'Pottery — beginner series',dept:'Arts',date:'2026-05-12',time:'6:00 PM',loc:'APR Studio',staff:'Tom Pierce',status:'Scheduled',desc:'A 4-week beginner pottery series. Students will learn hand-building and basic wheel techniques.',checklist:[{t:'Book APR Studio kiln',done:true},{t:'Order clay and glazes',done:true},{t:'Confirm Tom Pierce availability',done:true},{t:'Set up registration form',done:false},{t:'Send confirmation emails to registrants',done:false}],docs:[],autoEvents:[],isAuto:false},
+  {id:4,name:'Adult swim fitness',dept:'Rec',date:'2026-05-14',time:'7:00 AM',loc:'Aquatic Center',staff:'Sara Nguyen',status:'Scheduled',desc:'Early morning water fitness class for adults 18+. Participants should bring their own towels.',checklist:[{t:'Reserve Aquatic Center lane',done:true},{t:'Print attendance sheets',done:false},{t:'Confirm Sara Nguyen schedule',done:true},{t:'Post in monthly newsletter',done:false}],docs:[],autoEvents:[],isAuto:false},
+  {id:5,name:'Nature photography walk',dept:'Parks',date:'2026-05-17',time:'9:00 AM',loc:'Strouds Run SP',staff:'Kevin James',status:'Draft',desc:'A guided photography walk focusing on macro and landscape shots in the park.',checklist:[{t:'Draft event description',done:true},{t:'Confirm lead photographer',done:false},{t:'Set registration cap',done:false}],docs:[],autoEvents:[],isAuto:false},
+  {id:6,name:'Mural painting workshop',dept:'Arts',date:'2026-05-20',time:'11:00 AM',loc:'APR Studio',staff:'Laura Mitchell',status:'Draft',desc:'Community mural painting session. Participants will contribute to a collaborative public artwork.',checklist:[{t:'Identify wall/surface location',done:false},{t:'Get city approval',done:false},{t:'Order exterior paint',done:false}],docs:[],autoEvents:[],isAuto:false},
+  {id:7,name:'Kayak intro clinic',dept:'Parks',date:'2026-05-24',time:'10:00 AM',loc:'Dow Lake',staff:'Kevin James',status:'Draft',desc:'Introduction to kayaking on Dow Lake. Life vests and kayaks provided. No experience needed.',checklist:[{t:'Reserve kayaks from equipment store',done:false},{t:'Confirm lifeguard on site',done:false},{t:'Weather contingency plan',done:false}],docs:[],autoEvents:[],isAuto:false},
+];
+
+let staffList = [
+  {id:0,first:'Laura',last:'Mitchell',ini:'LM',dept:'Arts',role:'Visual arts instructor',specs:'Painting, drawing, mixed media',evts:4,email:'l.mitchell@athens.gov',phone:'(740) 555-0101'},
+  {id:1,first:'Kevin',last:'James',ini:'KJ',dept:'Parks',role:'Park ranger / guide',specs:'Trail ecology, kayaking',evts:3,email:'k.james@athens.gov',phone:'(740) 555-0102'},
+  {id:2,first:'Dana',last:'Carter',ini:'DC',dept:'Rec',role:'Recreation coordinator',specs:'Team sports, fitness',evts:3,email:'d.carter@athens.gov',phone:'(740) 555-0103'},
+  {id:3,first:'Tom',last:'Pierce',ini:'TP',dept:'Arts',role:'Ceramics instructor',specs:'Pottery, sculpture',evts:2,email:'t.pierce@athens.gov',phone:'(740) 555-0104'},
+  {id:4,first:'Sara',last:'Nguyen',ini:'SN',dept:'Rec',role:'Aquatics coach',specs:'Swim lessons, water fitness',evts:5,email:'s.nguyen@athens.gov',phone:'(740) 555-0105'},
+  {id:5,first:'Priya',last:'Patel',ini:'PP',dept:'Arts',role:'Dance instructor',specs:'Ballet, contemporary dance',evts:1,email:'p.patel@athens.gov',phone:'(740) 555-0106'},
+  {id:6,first:'Marcus',last:'Webb',ini:'MW',dept:'Parks',role:'Outdoor educator',specs:'Birdwatching, wilderness',evts:2,email:'m.webb@athens.gov',phone:'(740) 555-0107'},
+];
+
+// ── STATE ─────────────────────────────────────────────────────────
+let currentPage = 'dashboard', prevPage = 'dashboard';
+let editStaffId = null, currentDocEvtId = null, currentDetailId = null;
+let calView = 'month', calYear = 2026, calMonth = 4, calDay = 5;
+
+// ── HELPERS ───────────────────────────────────────────────────────
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const PAGE_TITLES = {dashboard:'Dashboard',events:'All events','event-detail':'Event detail',calendar:'Calendar',staff:'Instructors & staff',schedule:'Staff schedule'};
+
+function avCls(d){return d==='Arts'?'ava':d==='Parks'?'avp':'avr';}
+function dBadge(d){return d==='Arts'?'<span class="badge ba">Arts</span>':d==='Parks'?'<span class="badge bp">Parks</span>':'<span class="badge br">Rec</span>';}
+function sBadge(s){return s==='Scheduled'?'<span class="badge bs">Scheduled</span>':s==='Draft'?'<span class="badge bd">Draft</span>':'<span class="badge bc">Cancelled</span>';}
+function dColor(d){return d==='Arts'?'#534AB7':d==='Parks'?'#0F6E56':'#D85A30';}
+function chipColor(e){return e.isAuto?'#378ADD':dColor(e.dept);}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────
+function goPage(p, el){
+  if(p !== 'event-detail') prevPage = currentPage;
+  currentPage = p;
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  if(el) el.classList.add('active');
+  else { const ni=document.querySelector(`.nav-item[data-p="${p}"]`); if(ni) ni.classList.add('active'); }
+  document.getElementById('page-title').textContent = PAGE_TITLES[p] || p;
+  document.getElementById('back-btn').classList.toggle('show', p==='event-detail');
+  document.getElementById('scroll-area').scrollTop = 0;
+  if(p==='calendar') renderCal();
+  if(p==='staff') renderStaff('All');
+  if(p==='events') renderEvts('All');
+  if(p==='dashboard') renderDashboard();
+}
+function goBack(){ goPage(prevPage); }
+
+// ── DASHBOARD ─────────────────────────────────────────────────────
+function renderDashboard(){
+  document.getElementById('staff-count').textContent = staffList.length;
+  document.getElementById('draft-count').textContent = evts.filter(e=>e.status==='Draft'&&!e.isAuto).length;
+  const upcoming = evts.filter(e=>!e.isAuto&&e.status==='Scheduled').slice(0,5);
+  document.getElementById('dash-events').innerHTML = upcoming.map(e=>`
+    <div class="event-row" onclick="openEventDetail(${e.id})">
+      <div class="dot d${e.dept==='Arts'?'a':e.dept==='Parks'?'p':'r'}"></div>
+      <div style="flex:1"><div class="evt-name">${e.name}</div><div class="evt-meta">${e.date} · ${e.time} · ${e.loc}</div></div>
+      ${dBadge(e.dept)}
+    </div>`).join('');
+  document.getElementById('dash-staff').innerHTML = staffList.slice(0,5).map(s=>`
+    <div class="staff-row">
+      <div class="av ${avCls(s.dept)}">${s.ini}</div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:600">${s.first} ${s.last}</div><div style="font-size:10px;color:var(--text-secondary)">${s.role}</div></div>
+      ${dBadge(s.dept)}
+    </div>`).join('');
+}
+
+// ── EVENTS LIST ───────────────────────────────────────────────────
+function renderEvts(f){
+  const rows = evts.filter(e=>!e.isAuto&&(f==='All'||(f==='Draft'?e.status==='Draft':e.dept===f)));
+  document.getElementById('evt-tbody').innerHTML = rows.map(e=>`
+    <tr>
+      <td style="font-weight:600;color:var(--accent);cursor:pointer" onclick="openEventDetail(${e.id})">${e.name}</td>
+      <td>${dBadge(e.dept)}</td>
+      <td>${e.date}</td><td>${e.time}</td>
+      <td style="color:var(--text-secondary);font-size:11px">${e.loc}</td>
+      <td>${e.staff}</td>
+      <td>${sBadge(e.status)}</td>
+      <td><button class="btn btn-sm" onclick="openEventDetail(${e.id})">Open</button></td>
+    </tr>`).join('');
+}
+function fEvt(f,el){ document.querySelectorAll('#page-events .fb').forEach(b=>b.classList.remove('on')); el.classList.add('on'); renderEvts(f); }
+
+// ── EVENT DETAIL ──────────────────────────────────────────────────
+function openEventDetail(id){
+  currentDetailId = id;
+  const e = evts.find(x=>x.id===id);
+  if(!e) return;
+  const total=e.checklist.length, done=e.checklist.filter(c=>c.done).length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  const ganttTasks = [
+    {label:'Venue booking',start:0,len:1,color:'#534AB7'},
+    {label:'Staff confirmation',start:1,len:1,color:'#0F6E56'},
+    {label:'Marketing & flyers',start:2,len:2,color:'#D85A30'},
+    {label:'Volunteer outreach',start:2,len:3,color:'#BA7517'},
+    {label:'Social media posts',start:3,len:4,color:'#185FA5'},
+    {label:'Equipment & supplies',start:3,len:2,color:'#993556'},
+    {label:'Reminder emails',start:6,len:1,color:'#0F6E56'},
+    {label:'Day-of setup',start:7,len:1,color:'#534AB7'},
+  ];
+  const weeks = 8;
+  const autoMilestones = [
+    {label:'Social media announcement',daysOut:28,color:'#185FA5'},
+    {label:'Volunteer outreach email',daysOut:21,color:'#D85A30'},
+    {label:'Registration opens',daysOut:14,color:'#0F6E56'},
+    {label:'Social media reminder',daysOut:7,color:'#185FA5'},
+    {label:'Staff briefing',daysOut:3,color:'#534AB7'},
+    {label:'Reminder email to registrants',daysOut:1,color:'#0F6E56'},
+  ];
+  const docColors = {PDF:'#bc4a4a',DOC:'#185FA5',XLS:'#27500A',IMG:'#854F0B',Other:'#5F5E5A'};
+
+  document.getElementById('detail-content').innerHTML = `
+  <div class="detail-header">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">${dBadge(e.dept)} ${sBadge(e.status)}</div>
+        <div class="detail-title">${e.name}</div>
+        <div class="detail-meta-row">
+          <span>📅 ${e.date}</span><span>🕐 ${e.time}</span><span>📍 ${e.loc}</span><span>👤 ${e.staff}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:6px">${e.desc}</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="triggerAutomate(${e.id})">⚡ Auto-schedule milestones</button>
+    </div>
+    <div style="margin-top:12px">
+      <div style="font-size:10px;color:var(--text-secondary);margin-bottom:5px">Checklist progress — ${done}/${total} tasks complete (${pct}%)</div>
+      <div class="progress-bar" style="height:7px"><div class="progress-fill" style="width:${pct}%"></div></div>
+    </div>
+  </div>
+
+  <div class="detail-grid">
+    <div class="card">
+      <div class="card-title">Checklist / to-do <span style="font-size:10px;font-weight:400;color:var(--text-tertiary)">${pct}% done</span></div>
+      <div id="chk-list-${e.id}">
+        ${e.checklist.map((c,i)=>`
+        <div class="checklist-item">
+          <input type="checkbox" id="chk-${e.id}-${i}" ${c.done?'checked':''} onchange="toggleCheck(${e.id},${i})"/>
+          <label for="chk-${e.id}-${i}" class="${c.done?'done':''}">${c.t}</label>
+          <span onclick="removeCheck(${e.id},${i})" style="font-size:10px;color:var(--text-tertiary);cursor:pointer;padding:2px 5px" title="Remove">✕</span>
+        </div>`).join('')}
+      </div>
+      <div class="add-item-row">
+        <input type="text" id="new-chk-${e.id}" placeholder="Add a task..." onkeydown="if(event.key==='Enter')addCheck(${e.id})"/>
+        <button class="btn btn-primary btn-sm" onclick="addCheck(${e.id})">Add</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Prep milestones — auto-schedule
+        <button class="btn btn-sm" onclick="triggerAutomate(${e.id})">Run ⚡</button>
+      </div>
+      <div id="auto-list-${e.id}">
+        ${e.autoEvents.length ? e.autoEvents.map(m=>`
+        <div class="auto-item">
+          <div class="auto-dot" style="background:${m.color}"></div>
+          <div><div class="auto-label">${m.label}</div><div class="auto-date">${m.daysOut} days before event · auto-scheduled</div></div>
+        </div>`).join('') : autoMilestones.map(m=>`
+        <div class="auto-item">
+          <div class="auto-dot" style="background:${m.color}"></div>
+          <div><div class="auto-label">${m.label}</div><div class="auto-date">${m.daysOut} days before event</div></div>
+        </div>`).join('')}
+      </div>
+      ${e.autoEvents.length ? '<div style="margin-top:8px;font-size:10px;color:var(--sched-color);font-weight:600">✓ Milestones pushed to calendar</div>' : '<div style="margin-top:8px;font-size:10px;color:var(--text-tertiary)">Click "Run ⚡" to push these dates to the calendar.</div>'}
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">Gantt timeline — 8 weeks to event</div>
+    <div class="gantt-wrap">
+      <div class="gantt-header">
+        <div class="gantt-header-label"></div>
+        <div class="gantt-weeks">${Array.from({length:weeks},(_,i)=>`<div class="gantt-week">Wk ${i+1}</div>`).join('')}</div>
+      </div>
+      ${ganttTasks.map(t=>`
+      <div class="gantt-row">
+        <div class="gantt-label" title="${t.label}">${t.label}</div>
+        <div class="gantt-track">
+          <div class="gantt-bar" style="left:${t.start/weeks*100}%;width:${t.len/weeks*100}%;background:${t.color}">${t.label}</div>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Documents
+      <button class="btn btn-sm" onclick="openDocModal(${e.id})">+ Upload</button>
+    </div>
+    <div id="doc-list-${e.id}">
+      ${e.docs.length===0 ? '<div style="font-size:12px;color:var(--text-tertiary);padding:10px 0">No documents yet. Upload contracts, budgets, flyers, and more.</div>' :
+        e.docs.map((d,i)=>`
+        <div class="doc-item">
+          <div class="doc-icon" style="background:${(docColors[d.type]||'#888')}22;color:${docColors[d.type]||'#888'}">${d.type}</div>
+          <div style="flex:1"><div class="doc-name">${d.name}</div><div class="doc-meta">Added ${d.date}${d.notes?' · '+d.notes:''}</div></div>
+          <button onclick="removeDoc(${e.id},${i})" style="font-size:10px;background:none;border:none;cursor:pointer;color:var(--text-tertiary);padding:4px" title="Remove">✕</button>
+        </div>`).join('')}
+    </div>
+  </div>`;
+
+  prevPage = currentPage;
+  currentPage = 'event-detail';
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-event-detail').classList.add('active');
+  document.getElementById('page-title').textContent = e.name;
+  document.getElementById('back-btn').classList.add('show');
+  document.getElementById('scroll-area').scrollTop = 0;
+}
+
+function toggleCheck(eid,idx){
+  const done = document.getElementById(`chk-${eid}-${idx}`).checked;
+  evts.find(e=>e.id===eid).checklist[idx].done = done;
+  const lbl = document.querySelector(`label[for="chk-${eid}-${idx}"]`);
+  if(lbl) lbl.className = done ? 'done' : '';
+}
+function addCheck(eid){
+  const inp = document.getElementById(`new-chk-${eid}`);
+  if(!inp.value.trim()) return;
+  evts.find(e=>e.id===eid).checklist.push({t:inp.value.trim(),done:false});
+  inp.value = '';
+  openEventDetail(eid);
+}
+function removeCheck(eid,idx){ evts.find(e=>e.id===eid).checklist.splice(idx,1); openEventDetail(eid); }
+
+function openDocModal(eid){ currentDocEvtId=eid; document.getElementById('doc-date').value=new Date().toISOString().slice(0,10); openModal('doc'); }
+function saveDoc(){
+  const name = document.getElementById('doc-name').value.trim() || 'Untitled document';
+  const type = document.getElementById('doc-type').value;
+  const dateVal = document.getElementById('doc-date').value;
+  const notes = document.getElementById('doc-notes').value;
+  const dateLabel = dateVal ? new Date(dateVal).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : 'Today';
+  evts.find(e=>e.id===currentDocEvtId).docs.push({name,type,date:dateLabel,notes});
+  closeModal('doc');
+  openEventDetail(currentDocEvtId);
+  toast('Document added.');
+}
+function removeDoc(eid,idx){ evts.find(e=>e.id===eid).docs.splice(idx,1); openEventDetail(eid); }
+
+function triggerAutomate(eid){
+  const e = evts.find(x=>x.id===eid);
+  const milestones = [
+    {label:'Social media announcement',daysOut:28,color:'#185FA5'},
+    {label:'Volunteer outreach email',daysOut:21,color:'#D85A30'},
+    {label:'Registration opens',daysOut:14,color:'#0F6E56'},
+    {label:'Social media reminder',daysOut:7,color:'#185FA5'},
+    {label:'Staff briefing',daysOut:3,color:'#534AB7'},
+    {label:'Reminder email to registrants',daysOut:1,color:'#0F6E56'},
+  ];
+  // Remove previous auto events for this event
+  evts = evts.filter(x=>!(x.isAuto && x.parentId===eid));
+  if(e.date && e.date !== 'TBD'){
+    const base = new Date(e.date);
+    milestones.forEach(m=>{
+      const md = new Date(base); md.setDate(md.getDate()-m.daysOut);
+      evts.push({id:evts.length,name:`[${e.name}] ${m.label}`,dept:e.dept,date:md.toISOString().slice(0,10),time:'9:00 AM',loc:'—',staff:e.staff,status:'Scheduled',desc:'Auto-scheduled milestone',checklist:[],docs:[],autoEvents:[],isAuto:true,parentId:eid});
+    });
+  }
+  e.autoEvents = milestones;
+  toast(`6 milestones pushed to calendar for "${e.name}"!`);
+  openEventDetail(eid);
+}
+
+// ── STAFF ─────────────────────────────────────────────────────────
+function renderStaff(f){
+  const rows = staffList.filter(s=>f==='All'||s.dept===f);
+  document.getElementById('stf-tbody').innerHTML = rows.map(s=>`
+    <tr>
+      <td><div style="display:flex;align-items:center;gap:7px">
+        <div class="av ${avCls(s.dept)}" style="width:26px;height:26px;font-size:9px">${s.ini}</div>
+        <span style="font-weight:600">${s.first} ${s.last}</span>
+      </div></td>
+      <td style="color:var(--text-secondary)">${s.role}</td>
+      <td>${dBadge(s.dept)}</td>
+      <td style="font-size:11px;color:var(--text-secondary)">${s.specs}</td>
+      <td style="text-align:center">${s.evts}</td>
+      <td style="font-size:11px;color:var(--text-secondary)">${s.email}</td>
+      <td><button class="btn btn-sm" onclick="editStaff(${s.id})">Edit</button></td>
+    </tr>`).join('');
+}
+function fStf(f,el){ document.querySelectorAll('#page-staff .fb').forEach(b=>b.classList.remove('on')); el.classList.add('on'); renderStaff(f); }
+
+function saveStaff(){
+  const first = document.getElementById('ns-first').value.trim();
+  const last = document.getElementById('ns-last').value.trim();
+  if(!first||!last){ toast('Please enter first and last name.'); return; }
+  const dept = document.getElementById('ns-dept').value === 'Recreation' ? 'Rec' : document.getElementById('ns-dept').value;
+  const ini = (first[0]+(last[0]||'')).toUpperCase();
+  staffList.push({id:staffList.length,first,last,ini,dept,role:document.getElementById('ns-role').value,specs:document.getElementById('ns-specs').value,evts:0,email:document.getElementById('ns-email').value,phone:document.getElementById('ns-phone').value});
+  ['ns-first','ns-last','ns-role','ns-specs','ns-email','ns-phone'].forEach(id=>document.getElementById(id).value='');
+  closeModal('staff');
+  renderStaff('All');
+  renderDashboard();
+  goPage('staff');
+  toast(`${first} ${last} added to staff.`);
+}
+
+function editStaff(id){
+  editStaffId = id;
+  const s = staffList.find(x=>x.id===id);
+  document.getElementById('es-first').value = s.first;
+  document.getElementById('es-last').value = s.last;
+  document.getElementById('es-dept').value = s.dept==='Rec'?'Recreation':s.dept;
+  document.getElementById('es-role').value = s.role;
+  document.getElementById('es-specs').value = s.specs;
+  document.getElementById('es-email').value = s.email;
+  document.getElementById('es-phone').value = s.phone||'';
+  openModal('edit-staff');
+}
+function updateStaff(){
+  const s = staffList.find(x=>x.id===editStaffId);
+  s.first = document.getElementById('es-first').value;
+  s.last = document.getElementById('es-last').value;
+  s.dept = document.getElementById('es-dept').value==='Recreation'?'Rec':document.getElementById('es-dept').value;
+  s.ini = (s.first[0]+(s.last[0]||'')).toUpperCase();
+  s.role = document.getElementById('es-role').value;
+  s.specs = document.getElementById('es-specs').value;
+  s.email = document.getElementById('es-email').value;
+  s.phone = document.getElementById('es-phone').value;
+  closeModal('edit-staff');
+  renderStaff('All');
+  renderDashboard();
+  toast('Staff member updated.');
+}
+function deleteStaff(){
+  const s = staffList.find(x=>x.id===editStaffId);
+  if(!confirm(`Remove ${s.first} ${s.last} from staff?`)) return;
+  staffList = staffList.filter(x=>x.id!==editStaffId);
+  closeModal('edit-staff');
+  renderStaff('All');
+  renderDashboard();
+  toast('Staff member removed.');
+}
+
+// ── EVENTS (add) ─────────────────────────────────────────────────
+function saveEvent(){
+  const name = document.getElementById('ne-name').value.trim();
+  if(!name){ toast('Please enter an event name.'); return; }
+  const dept = document.getElementById('ne-dept').value==='Recreation'?'Rec':document.getElementById('ne-dept').value;
+  const auto = document.getElementById('ne-auto').checked;
+  const newId = evts.length;
+  const newEvt = {id:newId,name,dept,date:document.getElementById('ne-date').value||'TBD',time:document.getElementById('ne-time').value||'TBD',loc:document.getElementById('ne-loc').value||'TBD',staff:document.getElementById('ne-staff-sel').value,status:document.getElementById('ne-status').value,desc:document.getElementById('ne-desc').value,checklist:[{t:'Book venue',done:false},{t:'Confirm staff',done:false},{t:'Promote event',done:false}],docs:[],autoEvents:[],isAuto:false};
+  evts.push(newEvt);
+  closeModal('event');
+  if(auto && newEvt.date !== 'TBD') triggerAutomate(newId);
+  else toast(`"${name}" added.`);
+  renderEvts('All');
+  goPage('events');
+}
+
+// ── CALENDAR ──────────────────────────────────────────────────────
+function setCalView(v,el){
+  calView=v;
+  document.querySelectorAll('.cal-vbtn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  renderCal();
+}
+function calNav(d){
+  if(calView==='month'){ calMonth+=d; if(calMonth>11){calMonth=0;calYear++;} if(calMonth<0){calMonth=11;calYear--;} }
+  else if(calView==='week'){ calDay+=d*7; normDate(); }
+  else if(calView==='day'){ calDay+=d; normDate(); }
+  else if(calView==='year'){ calYear+=d; }
+  renderCal();
+}
+function normDate(){
+  const d=new Date(calYear,calMonth,calDay);
+  calYear=d.getFullYear(); calMonth=d.getMonth(); calDay=d.getDate();
+}
+function calToday(){ const t=new Date(); calYear=t.getFullYear(); calMonth=t.getMonth(); calDay=t.getDate(); renderCal(); }
+
+function getEvtsForDate(y,m,d){
+  const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  return evts.filter(e=>e.date===ds);
+}
+
+function renderCal(){
+  const body = document.getElementById('cal-body');
+  const today = new Date();
+
+  if(calView==='month'){
+    document.getElementById('cal-nav-label').textContent = MONTHS[calMonth]+' '+calYear;
+    const first=new Date(calYear,calMonth,1).getDay(), total=new Date(calYear,calMonth+1,0).getDate();
+    const prevTotal=new Date(calYear,calMonth,0).getDate();
+    let h=`<div class="month-grid">`;
+    h+=DAYS.map(d=>`<div style="background:var(--bg-secondary);padding:6px 5px;font-size:10px;font-weight:700;color:var(--text-secondary);border-right:1px solid var(--border-primary);text-align:center">${d}</div>`).join('');
+    for(let i=0;i<first;i++) h+=`<div class="month-cell other-month"><div class="day-num">${prevTotal-first+1+i}</div></div>`;
+    for(let d=1;d<=total;d++){
+      const isT=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;
+      const des=getEvtsForDate(calYear,calMonth,d);
+      h+=`<div class="month-cell${isT?' today':''}" onclick="clickDay(${d})">
+        <div class="day-num">${d}</div>
+        ${des.slice(0,3).map(e=>`<div class="cal-chip" style="background:${chipColor(e)}22;color:${chipColor(e)}" onclick="event.stopPropagation();openEventDetail(${e.id})" title="${e.name}">${e.name}</div>`).join('')}
+        ${des.length>3?`<div style="font-size:9px;color:var(--text-tertiary)">+${des.length-3} more</div>`:''}
+      </div>`;
+    }
+    const rem=(7-(first+total)%7)%7;
+    for(let i=1;i<=rem;i++) h+=`<div class="month-cell other-month"><div class="day-num">${i}</div></div>`;
+    h+=`</div>`;
+    body.innerHTML=h;
+
+  } else if(calView==='week'){
+    normDate();
+    const sw=new Date(calYear,calMonth,calDay);
+    sw.setDate(sw.getDate()-sw.getDay());
+    const wds=Array.from({length:7},(_,i)=>{const d=new Date(sw);d.setDate(d.getDate()+i);return d;});
+    document.getElementById('cal-nav-label').textContent=`Week of ${MONTHS[wds[0].getMonth()]} ${wds[0].getDate()}`;
+    const hours=Array.from({length:14},(_,i)=>i+7);
+    let h=`<div class="week-cal-wrap"><div class="week-cal-grid">`;
+    h+=`<div class="wc-header"></div>`;
+    wds.forEach(d=>{
+      const isT=d.toDateString()===today.toDateString();
+      h+=`<div class="wc-header" style="${isT?'color:var(--accent);background:var(--accent-light);':''}" onclick="clickDay(${d.getDate()},${d.getMonth()},${d.getFullYear()})" style="cursor:pointer">${DAYS[d.getDay()]} ${d.getDate()}</div>`;
+    });
+    hours.forEach(hr=>{
+      const label=hr<12?`${hr}am`:hr===12?'12pm':`${hr-12}pm`;
+      h+=`<div class="wc-time">${label}</div>`;
+      wds.forEach(d=>{
+        const des=getEvtsForDate(d.getFullYear(),d.getMonth(),d.getDate()).filter(e=>{
+          const t=e.time; if(!t||t==='TBD') return false;
+          const hh=parseInt(t); const isPM=t.includes('PM');
+          const h24=isPM&&hh!==12?hh+12:(!isPM&&hh===12?0:hh);
+          return h24===hr;
+        });
+        const isT=d.toDateString()===today.toDateString();
+        h+=`<div class="wc-cell${isT?' today-col':''}">
+          ${des.map(e=>`<div onclick="openEventDetail(${e.id})" style="background:${chipColor(e)};color:#fff;font-size:9px;padding:1px 4px;border-radius:3px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:1px">${e.name}</div>`).join('')}
+        </div>`;
+      });
+    });
+    h+=`</div></div>`;
+    body.innerHTML=h;
+
+  } else if(calView==='day'){
+    normDate();
+    const d=new Date(calYear,calMonth,calDay);
+    document.getElementById('cal-nav-label').textContent=`${DAYS[d.getDay()]}, ${MONTHS[calMonth]} ${calDay}, ${calYear}`;
+    const hours=Array.from({length:15},(_,i)=>i+7);
+    const des=getEvtsForDate(calYear,calMonth,calDay);
+    let h=`<div class="day-view-wrap">`;
+    hours.forEach(hr=>{
+      const label=hr<12?`${hr}:00 am`:hr===12?'12:00 pm':`${hr-12}:00 pm`;
+      const matching=des.filter(e=>{
+        const t=e.time; if(!t||t==='TBD') return hr===9;
+        const hh=parseInt(t); const isPM=t.includes('PM');
+        const h24=isPM&&hh!==12?hh+12:(!isPM&&hh===12?0:hh);
+        return h24===hr;
+      });
+      h+=`<div class="day-hour">
+        <div class="hour-label">${label}</div>
+        <div class="hour-content">${matching.map(e=>`
+          <div onclick="openEventDetail(${e.id})" style="background:${chipColor(e)};color:#fff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:6px;margin-bottom:3px;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+            <span>${e.name}</span><span style="font-size:10px;font-weight:400;opacity:.85">${e.loc}</span>
+          </div>`).join('')}</div>
+      </div>`;
+    });
+    h+=`</div>`;
+    body.innerHTML=h;
+
+  } else if(calView==='year'){
+    document.getElementById('cal-nav-label').textContent=`${calYear}`;
+    let h=`<div class="year-grid">`;
+    for(let m=0;m<12;m++){
+      const total=new Date(calYear,m+1,0).getDate(), first=new Date(calYear,m,1).getDay();
+      let mh=`<div class="year-month"><div class="ym-title">${MONTHS[m]}</div><div class="ym-mini">`;
+      mh+=['S','M','T','W','T','F','S'].map(d=>`<div class="ym-cell" style="font-weight:700">${d}</div>`).join('');
+      for(let i=0;i<first;i++) mh+=`<div class="ym-cell"></div>`;
+      for(let d=1;d<=total;d++){
+        const des=getEvtsForDate(calYear,m,d);
+        const isT=today.getFullYear()===calYear&&today.getMonth()===m&&today.getDate()===d;
+        mh+=`<div class="ym-cell${des.length?' has-ev':''}${isT?' today-d':''}" onclick="${(des.length||isT)?`goToDay(${d},${m},${calYear})`:''}" title="${des.length?des.map(e=>e.name).join(', '):''}">${d}</div>`;
+      }
+      mh+=`</div></div>`;
+      h+=mh;
+    }
+    h+=`</div>`;
+    body.innerHTML=h;
+  }
+}
+
+function clickDay(d,m,y){
+  calDay=d; if(m!==undefined)calMonth=m; if(y!==undefined)calYear=y;
+  calView='day';
+  document.querySelectorAll('.cal-vbtn').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.cal-vbtn')[2].classList.add('on');
+  renderCal();
+}
+function goToDay(d,m,y){ clickDay(d,m,y); }
+
+// ── MODALS ────────────────────────────────────────────────────────
+function openModal(t){
+  if(t==='event'){
+    document.getElementById('ne-staff-sel').innerHTML = staffList.map(s=>`<option>${s.first} ${s.last}</option>`).join('');
+    document.getElementById('ne-name').value='';
+    document.getElementById('ne-desc').value='';
+    document.getElementById('ne-date').value='';
+    document.getElementById('ne-auto').checked=false;
+  }
+  document.getElementById('modal-'+t).classList.add('open');
+  document.getElementById('modal-'+t).querySelector('input,select')?.focus();
+}
+function closeModal(t){ document.getElementById('modal-'+t).classList.remove('open'); }
+
+// close modal on bg click
+document.querySelectorAll('.modal-bg').forEach(bg=>{
+  bg.addEventListener('click',e=>{ if(e.target===bg) bg.classList.remove('open'); });
+});
+
+// ── INIT ──────────────────────────────────────────────────────────
+renderDashboard();
+renderEvts('All');
+renderStaff('All');
+</script>
+</body>
+</html>
